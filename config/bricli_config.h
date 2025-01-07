@@ -1,7 +1,8 @@
 #ifndef BRICLI_CONFIG_H
 #define BRICLI_CONFIG_H
 
-// Includes, types and defines
+// Sets the size of the internal response buffer in bytes
+#define BRICLI_BUFFER_SIZE 80
 
 #ifdef __cplusplus
 extern "C" {
