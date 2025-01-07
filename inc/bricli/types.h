@@ -1,6 +1,9 @@
 #ifndef BRICLI_TYPES_H
 #define BRICLI_TYPES_H
 
+#include <stdint.h>
+#include "bricli_config.h"
+
 /**
  * Contains error types for use with the BriCLI library
  */
