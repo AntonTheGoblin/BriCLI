@@ -2,7 +2,7 @@
 #define BRICLI_H
 
 #include "bricli_config.h"
-
+#include <bricli/types.h>
 
 // Sets the size of the internal response buffer in bytes
 #ifndef BRICLI_BUFFER_SIZE
