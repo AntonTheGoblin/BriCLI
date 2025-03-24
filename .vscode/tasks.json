@@ -1,0 +1,77 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cmake",
+			"label": "Configure: x86_64 Debug",
+			"command": "configure",
+			"preset": "x86_64-debug",
+			"problemMatcher": [],
+			"detail": "Configures x86_64 Debug build",
+			"hide": true
+		},
+		{
+			"type": "cmake",
+			"label": "x86_64 Debug",
+			"command": "build",
+			"dependsOn": [
+				"Configure: x86_64 Debug"
+			],
+			"targets": [
+				"all"
+			],
+			"preset": "x86_64-debug",
+			"group": "build",
+			"problemMatcher": {
+				"owner": "cpp",
+				"fileLocation": [
+					"absolute"
+				],
+				"pattern": {
+					"regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+					"file": 1,
+					"line": 2,
+					"column": 3,
+					"severity": 4,
+					"message": 5
+				}
+			},
+			"detail": "Builds the library for x86_64 in debug configuration"
+		},
+		{
+			"type": "cmake",
+			"label": "Configure: x86_64 Release",
+			"command": "configure",
+			"preset": "x86_64-release",
+			"problemMatcher": [],
+			"detail": "Configures x86_64 Release build",
+			"hide": true
+		},
+		{
+			"type": "cmake",
+			"label": "x86_64 Release",
+			"command": "build",
+			"dependsOn": [
+				"Configure: x86_64 Release"
+			],
+			"targets": [
+				"all"
+			],
+			"preset": "x86_64-release",
+			"group": "build",
+			"problemMatcher": [],
+			"detail": "Builds the library for x86_64 in release configuration"
+		},
+		{
+			"type":"process",
+			"label": "Run Tests",
+			"command": "ctest",
+			"options": {
+				"cwd": "${workspaceFolder}/debug/x86_64/"
+			},
+			"dependsOn": ["x86_64 Debug"],
+			"group": "test",
+			"detail": "Runs the test binary compiled for x86_64 Debug"
+		}
+	]
+}
