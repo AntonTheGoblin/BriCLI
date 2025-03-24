@@ -22,27 +22,13 @@ option(${PROJECT_NAME}_GENERATE_COVERAGE "Enable to build code coverage informat
 # Root directory for finding application files
 set(APP_ROOT_DIRECTORY ${PROJECT_SOURCE_DIR}/..)
 
-# ======================
-# == Googletest Setup ==
-# ======================
-
-include(FetchContent)
-
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
-  DOWNLOAD_EXTRACT_TIMESTAMP ON
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-FetchContent_MakeAvailable(googletest)
-
 # ===================
 # == Test Settings ==
 # ===================
 
-include(GoogleTest)
+find_package(Catch2 3 REQUIRED)
+include(CTest)
+include(Catch)
 enable_testing()
 
 # Top level target to enable test only builds
@@ -54,16 +40,17 @@ add_executable(ParserTest
 )
 target_include_directories(ParserTest PRIVATE 
 	${APP_ROOT_DIRECTORY}/inc
+	${APP_ROOT_DIRECTORY}/config
 	${PROJECT_SOURCE_DIR}/lib
 	)
-target_link_libraries(ParserTest PRIVATE GTest::gmock_main)
+target_link_libraries(ParserTest PRIVATE Catch2::Catch2WithMain)
 list(APPEND tests ParserTest)
 
 # ====================
 # == Test Discovery ==
 # ====================
 foreach(test ${tests})
-	gtest_discover_tests(${test})
+	catch_discover_tests(${test})
 	add_dependencies(${PROJECT_NAME} ${test})
 	message(STATUS "Found test: ${test}")
 endforeach() # (test ${tests})

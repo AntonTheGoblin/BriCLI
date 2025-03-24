@@ -1,32 +1,55 @@
-#include <gtest/gtest.h>
+// #include <gtest/gtest.h>
+#include <catch2/catch_test_macros.hpp>
 #include <FFF/fff.h>
 DEFINE_FFF_GLOBALS;
 
 // Unit under test.
-#include "bricli/bricli.h"
+#include <bricli/bricli.h>
 
-namespace UnitTests
+SCENARIO( "Bricli can be initialised", "[init]" )
 {
-	class ParserTest : public ::testing::Test
+	GIVEN("A default setup")
 	{
-	protected:
+		Bricli_t testCli;
+		BricliError_t result;
+		BricliInit_t init;
+		init.Eol = "\r\n";
+		result = Bricli_Init(&testCli, &init);
 
-		ParserTest() { }
+		REQUIRE( strcmp((const char *)testCli.Eol, "\r\n") == 0 );
+		REQUIRE( result == BricliErrorOk );
 
-		virtual ~ParserTest() { }
-
-		virtual void SetUp() override
+		WHEN ("The EOL parameter is NULL")
 		{
-			
+			init.Eol = NULL;
+			result = Bricli_Init(&testCli, &init);
+
+			THEN("The initialise fails")
+			{
+				REQUIRE(result == BricliErrorNullArgument);
+			}
 		}
 
-		virtual void TearDown() override { }
+		WHEN ("The EOL parameter is empty")
+		{
+			init.Eol = "";
+			result = Bricli_Init(&testCli, &init);
 
-	};
+			THEN("The initialise fails")
+			{
+				REQUIRE(result == BricliErrorInavlidArgument);
+			}
+		}
 
-	TEST_F(ParserTest, TestName)
-	{
-		FAIL();
+		WHEN ("The EOL parameter is too long")
+		{
+			init.Eol = "ABC";
+			result = Bricli_Init(&testCli, &init);
+
+			THEN("The initialise fails")
+			{
+				REQUIRE(result == BricliErrorInavlidArgument);
+			}
+		}
 	}
-
 }
