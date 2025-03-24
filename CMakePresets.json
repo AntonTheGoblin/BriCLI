@@ -1,0 +1,54 @@
+{
+    "version": 4,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 20,
+        "patch": 0
+    },
+    "include": [],
+    "configurePresets": [
+        {
+            "name": "Unix-Makefiles-Generator",
+            "generator": "Unix Makefiles",
+            "hidden": true
+        },
+        {
+            "name": "x86_64-debug",
+            "displayName": "x86_64 Debug",
+            "description": "Debug build for x86_64",
+            "inherits": [
+                "Unix-Makefiles-Generator"
+            ],
+            "binaryDir": "${sourceDir}/debug/x86_64",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            },
+            "environment": {}
+        },
+        {
+            "name": "x86_64-release",
+            "displayName": "x86_64 Release",
+            "description": "Release build for x86_64",
+            "inherits": [
+                "Unix-Makefiles-Generator"
+            ],
+            "binaryDir": "${sourceDir}/release/x86_64",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            },
+            "environment": {}
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "x86_64-debug",
+            "configurePreset": "x86_64-debug"
+        },
+        {
+            "name": "x86_64-release",
+            "configurePreset": "x86_64-release"
+        }
+    ],
+    "testPresets": [
+    ]
+}
