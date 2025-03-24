@@ -39,5 +39,6 @@ target_include_directories(bricli PUBLIC
 
 # Only build the test exe if we are compiling for host
 if (${PROJECT_NAME}_BUILD_TESTS)
+	enable_testing()
 	add_subdirectory(${TEST_DIR})
 endif() # ${PROJECT_NAME}_BUILD_TESTS

@@ -2,18 +2,14 @@
 #define BRICLI_H
 
 #include "bricli_config.h"
+#include <bricli/options.h>
 #include <bricli/types.h>
-
-// Sets the size of the internal response buffer in bytes
-#ifndef BRICLI_BUFFER_SIZE
-#define BRICLI_BUFFER_SIZE 80
-#endif // BRICLI_BUFFER_SIZE
 
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
 
-// C functions and constants
+	BricliError_t Bricli_Init(Bricli_t *cli, BricliInit_t *init);
 
 #ifdef __cplusplus
 }
