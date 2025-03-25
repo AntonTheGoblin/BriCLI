@@ -6,6 +6,15 @@ DEFINE_FFF_GLOBALS;
 // Unit under test.
 #include <bricli/bricli.h>
 
+extern "C"
+{
+	FAKE_VALUE_FUNC(BricliError_t, PingCommand, uint8_t **, uint32_t);
+	static inline void ResetFakes(void)
+	{
+		RESET_FAKE(PingCommand);
+	}
+}
+
 SCENARIO( "Bricli can be initialised", "[init]" )
 {
 	GIVEN("A default setup")
@@ -54,6 +63,31 @@ SCENARIO( "Bricli can be initialised", "[init]" )
 			THEN("The initialise fails")
 			{
 				REQUIRE(result == BricliErrorInavlidArgument);
+			}
+		}
+	}
+}
+
+SCENARIO("Bricli can parse simple lines", "[parser]")
+{
+	ResetFakes();
+	
+	GIVEN("A nominal setup")
+	{
+		Bricli_t testCli;
+		BricliError_t result;
+		BricliInit_t init;
+		init.Eol = "\r\n";
+		(void)Bricli_Init(&testCli, &init);
+
+		WHEN( "A registered command is received" )
+		{
+			const char *testCommand = "ping\r\n";
+			result = Bricli_Parse((uint8_t *)testCommand, strlen(testCommand));
+
+			THEN( "The command handler is called" )
+			{
+				REQUIRE(PingCommand_fake.call_count > 0);
 			}
 		}
 	}
