@@ -1,3 +1,15 @@
+/**
+ * @file    bricli.h
+ * @brief   Header for the Bricli library
+ * @date    25/03/2025
+ * @version 1
+ * @author  Anthony Wall
+ *
+ * Copyright (C) 2025 Anthony Wall.
+ * All rights reserved.
+ *
+ **/
+
 #ifndef BRICLI_H
 #define BRICLI_H
 

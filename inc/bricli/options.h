@@ -1,3 +1,15 @@
+/**
+ * @file    options.h
+ * @brief   Contains default options implementations and collates bricli_config.h access
+ * @date    25/03/2025
+ * @version 1
+ * @author  Anthony Wall
+ *
+ * Copyright (C) 2025 Anthony Wall.
+ * All rights reserved.
+ *
+ **/
+
 #ifndef BRICLI_OPTIONS_H
 #define BRICLI_OPTIONS_H
 
