@@ -92,7 +92,50 @@
 extern "C" {
 #endif // __cplusplus
 
-// C functions and constants
+/**
+ * @brief Enumerated VT100 colour options
+ */
+typedef enum _BricliColours_t
+{
+    BricliTextBlack,
+    BricliTextRed,
+    BricliTextGreen,
+    BricliTextYellow,
+    BricliTextBlue,
+    BricliTextMagenta,
+    BricliTextCyan,
+    BricliTextWhite,
+
+    BricliTextBoldBlack,
+    BricliTextBoldRed,
+    BricliTextBoldGreen,
+    BricliTextBoldYellow,
+    BricliTextBoldBlue,
+    BricliTextBoldMagenta,
+    BricliTextBoldCyan,
+    BricliTextBoldWhite,
+
+    BricliUnderlineBlack,
+    BricliUnderlineRed,
+    BricliUnderlineGreen,
+    BricliUnderlineYellow,
+    BricliUnderlineBlue,
+    BricliUnderlineMagenta,
+    BricliUnderlineCyan,
+    BricliUnderlineWhite,
+
+    BricliBackgroundBlack,
+    BricliBackgroundRed,
+    BricliBackgroundGreen,
+    BricliBackgroundYellow,
+    BricliBackgroundBlue,
+    BricliBackgroundMagenta,
+    BricliBackgroundCyan,
+    BricliBackgroundWhite,
+
+    BricliColourReset
+} BricliColours_t;
+
 
 #ifdef __cplusplus
 }
