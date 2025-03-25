@@ -1,19 +1,46 @@
 // #include <gtest/gtest.h>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_string.hpp>
 #include <FFF/fff.h>
 DEFINE_FFF_GLOBALS;
 
 // Unit under test.
 #include <bricli/bricli.h>
 
+using Catch::Matchers::Equals;
+
 extern "C"
 {
-	FAKE_VALUE_FUNC(uint32_t, BspWrite, uint32_t, const uint8_t*);
+	FAKE_VALUE_FUNC(BricliError_t, PingCommand, uint32_t, uint8_t**);
+	FAKE_VALUE_FUNC(uint32_t, MockBspWrite, uint32_t, const uint8_t*);
+	
+	static inline uint32_t MockBspWriteCustomFake(uint32_t length, const uint8_t* data)
+	{
+		(void)data;
+		if (MockBspWrite_fake.return_val == UINT32_MAX)
+		{
+			return 0;
+		}
+		else if (MockBspWrite_fake.return_val == 0)
+		{
+			return length;
+		}
+		else
+		{
+			return MockBspWrite_fake.return_val;
+		}
+	}
+	
+	
 	static inline void ResetFakes(void)
 	{
 		RESET_FAKE(PingCommand);
-		RESET_FAKE(BspWrite);
+		RESET_FAKE(MockBspWrite);
+
+		MockBspWrite_fake.custom_fake = MockBspWriteCustomFake;
 	}
+
+	
 }
 
 SCENARIO( "Bricli can be initialised", "[init]" )
@@ -23,18 +50,18 @@ SCENARIO( "Bricli can be initialised", "[init]" )
 		Bricli_t testCli;
 		BricliError_t result;
 		BricliInit_t init;
-		init.Eol = "\r\n";
+		init.RxEol = (const uint8_t*)"\r\n";
 		result = Bricli_Init(&testCli, &init);
 
 		THEN( "The intialise completes successfully" )
 		{
-			REQUIRE( strcmp((const char *)testCli.Eol, "\r\n") == 0 );
+			REQUIRE( strcmp((const char *)testCli.RxEol, "\r\n") == 0 );
 			REQUIRE( result == BricliErrorOk );
 		}
 
 		WHEN ("The EOL parameter is NULL")
 		{
-			init.Eol = NULL;
+			init.RxEol = NULL;
 			result = Bricli_Init(&testCli, &init);
 
 			THEN("The initialise fails")
@@ -45,12 +72,12 @@ SCENARIO( "Bricli can be initialised", "[init]" )
 
 		WHEN ("The EOL parameter is empty")
 		{
-			init.Eol = "";
+			init.RxEol = (const uint8_t *)"";
 			result = Bricli_Init(&testCli, &init);
 
 			THEN("The initialise fails")
 			{
-				REQUIRE(result == BricliErrorInavlidArgument);
+				REQUIRE(result == BricliErrorBadParameter);
 			}
 		}
 
@@ -58,12 +85,55 @@ SCENARIO( "Bricli can be initialised", "[init]" )
 		{
 			uint8_t eol[BRICLI_EOL_SIZE + 1] = {0};
 			memset(eol, 'A', BRICLI_EOL_SIZE);
-			init.Eol = (const char*)eol;
+			init.RxEol = eol;
 			result = Bricli_Init(&testCli, &init);
 
 			THEN("The initialise fails")
 			{
-				REQUIRE(result == BricliErrorInavlidArgument);
+				REQUIRE(result == BricliErrorBadParameter);
+			}
+		}
+	}
+}
+
+SCENARIO("Bricli can write to the terminal", "[API]")
+{
+	const char *testData = "Hello World";
+	Bricli_t testCli = {0};
+	BricliInit_t init = {0};
+
+	init.RxEol = (const uint8_t *)"\r\n";
+	
+	ResetFakes();
+
+	GIVEN("A minimal setup")
+	{
+		init.BspWrite = MockBspWrite;
+		(void)Bricli_Init(&testCli, &init);
+
+		WHEN("A standard write is used")
+		{
+			BricliWrite(&testCli, strlen(testData), (const uint8_t *)testData);
+
+			THEN("The write function should be called exactly")
+			{
+				REQUIRE(MockBspWrite_fake.call_count > 0);
+				REQUIRE_THAT((const char*)MockBspWrite_fake.arg1_history[0], Equals(testData));
+			}
+		}
+	}
+
+	GIVEN( "An invalid setup" )
+	{
+		(void)Bricli_Init(&testCli, &init);
+
+		WHEN("A standard write is used")
+		{
+			BricliWrite(&testCli, strlen(testData), (const uint8_t *)testData);
+
+			THEN("The write function should not be called")
+			{
+				REQUIRE(MockBspWrite_fake.call_count == 0);
 			}
 		}
 	}
@@ -78,7 +148,7 @@ SCENARIO("Bricli can parse simple lines", "[parser]")
 		Bricli_t testCli;
 		BricliError_t result;
 		BricliInit_t init;
-		init.Eol = "\r\n";
+		init.RxEol = (const uint8_t *)"\r\n";
 		(void)Bricli_Init(&testCli, &init);
 
 		WHEN( "A registered command is received" )
