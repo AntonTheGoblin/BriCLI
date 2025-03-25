@@ -13,7 +13,7 @@ BricliError_t Bricli_Init(Bricli_t* cli, BricliInit_t* init)
 {
 	BricliError_t result = BricliErrorUnknown;
 
-	memset(cli->Buffer, 0, BRICLI_BUFFER_SIZE);
+	memset(cli, 0, sizeof(Bricli_t));
 	
 	// Validate the provided EOL string
 	if (init->RxEol == NULL)
@@ -23,12 +23,26 @@ BricliError_t Bricli_Init(Bricli_t* cli, BricliInit_t* init)
 	}
 	else if (strlen(init->RxEol) >= BRICLI_EOL_SIZE || strlen(init->RxEol) == 0)
 	{
-		result = BricliErrorInavlidArgument;
+		result = BricliErrorBadParameter;
 		goto cleanup;
 	}
+	else
+	{
+		// Set our EoL string
+		strcpy(cli->RxEol, init->RxEol);
+	}
 	
-	// Set our EoL string
-	strcpy(cli->RxEol, init->RxEol);
+
+	// Set our BSP Write function
+	if (init->BspWrite == NULL)
+	{
+		result = BricliErrorBadParameter;
+		goto cleanup;
+	}
+	else
+	{
+		cli->BspWrite = init->BspWrite;
+	}
 
 	// Success
 	result = BricliErrorOk;
