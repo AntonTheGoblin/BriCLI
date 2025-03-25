@@ -36,3 +36,10 @@ BricliError_t Bricli_Init(Bricli_t* cli, BricliInit_t* init)
 cleanup:
 	return result;
 }
+
+BricliError_t Bricli_Parse(uint8_t *buffer, uint32_t length)
+{
+	(void)buffer;
+	(void)length;
+	return BricliErrorUnknown;
+}
