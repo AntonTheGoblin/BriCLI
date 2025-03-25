@@ -16,8 +16,11 @@ SCENARIO( "Bricli can be initialised", "[init]" )
 		init.Eol = "\r\n";
 		result = Bricli_Init(&testCli, &init);
 
-		REQUIRE( strcmp((const char *)testCli.Eol, "\r\n") == 0 );
-		REQUIRE( result == BricliErrorOk );
+		THEN( "The intialise completes successfully" )
+		{
+			REQUIRE( strcmp((const char *)testCli.Eol, "\r\n") == 0 );
+			REQUIRE( result == BricliErrorOk );
+		}
 
 		WHEN ("The EOL parameter is NULL")
 		{
@@ -43,7 +46,9 @@ SCENARIO( "Bricli can be initialised", "[init]" )
 
 		WHEN ("The EOL parameter is too long")
 		{
-			init.Eol = "ABC";
+			uint8_t eol[BRICLI_EOL_SIZE + 1] = {0};
+			memset(eol, 'A', BRICLI_EOL_SIZE);
+			init.Eol = (const char*)eol;
 			result = Bricli_Init(&testCli, &init);
 
 			THEN("The initialise fails")
