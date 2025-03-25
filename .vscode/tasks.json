@@ -72,6 +72,18 @@
 			"dependsOn": ["x86_64 Debug"],
 			"group": "test",
 			"detail": "Runs the test binary compiled for x86_64 Debug"
+		},
+		{
+			"type":"process",
+			"label": "Run Tests With Failed Output",
+			"command": "ctest",
+			"args": ["--output-on-failure"],
+			"options": {
+				"cwd": "${workspaceFolder}/debug/x86_64/",
+			},
+			"dependsOn": ["x86_64 Debug"],
+			"group": "test",
+			"detail": "Runs the test binary compiled for x86_64 Debug"
 		}
 	]
 }
