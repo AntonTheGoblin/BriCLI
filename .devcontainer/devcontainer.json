@@ -25,7 +25,8 @@
 			"extensions": [
 				"ms-vscode.cmake-tools",
 				"ms-vscode.cpptools-extension-pack",
-				"twxs.cmake"
+				"twxs.cmake",
+				"eamodio.gitlens"
 			]
 		}
 	}
