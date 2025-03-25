@@ -22,7 +22,7 @@
 typedef struct _Bricli_t
 {
 	uint8_t Buffer[BRICLI_BUFFER_SIZE];	// The internal memory buffer
-	uint8_t Eol[BRICLI_EOL_SIZE];		// The current End-of-Line character for this parser
+	uint8_t RxEol[BRICLI_EOL_SIZE];		// The current End-of-Line character for this parser
 } Bricli_t;
 
 /**
@@ -30,7 +30,7 @@ typedef struct _Bricli_t
  */
 typedef struct _BricliInit_t
 {
-	const char *Eol;
+	const char *RxEol;
 } BricliInit_t;
 
 /**

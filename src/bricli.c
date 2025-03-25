@@ -16,19 +16,19 @@ BricliError_t Bricli_Init(Bricli_t* cli, BricliInit_t* init)
 	memset(cli->Buffer, 0, BRICLI_BUFFER_SIZE);
 	
 	// Validate the provided EOL string
-	if (init->Eol == NULL)
+	if (init->RxEol == NULL)
 	{
 		result = BricliErrorNullArgument;
 		goto cleanup;
 	}
-	else if (strlen(init->Eol) >= BRICLI_EOL_SIZE || strlen(init->Eol) == 0)
+	else if (strlen(init->RxEol) >= BRICLI_EOL_SIZE || strlen(init->RxEol) == 0)
 	{
 		result = BricliErrorInavlidArgument;
 		goto cleanup;
 	}
 	
 	// Set our EoL string
-	strcpy(cli->Eol, init->Eol);
+	strcpy(cli->RxEol, init->RxEol);
 
 	// Success
 	result = BricliErrorOk;
