@@ -8,10 +8,11 @@ DEFINE_FFF_GLOBALS;
 
 extern "C"
 {
-	FAKE_VALUE_FUNC(BricliError_t, PingCommand, uint8_t **, uint32_t);
+	FAKE_VALUE_FUNC(uint32_t, BspWrite, uint32_t, const uint8_t*);
 	static inline void ResetFakes(void)
 	{
 		RESET_FAKE(PingCommand);
+		RESET_FAKE(BspWrite);
 	}
 }
 
