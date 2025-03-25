@@ -1,6 +1,6 @@
 /**
- * @file    bricli.h
- * @brief   Header for the Bricli library
+ * @file    api.h
+ * @brief   Public API for the Bricli library
  * @date    25/03/2025
  * @version 1
  * @author  Anthony Wall
@@ -10,20 +10,20 @@
  *
  **/
 
-#ifndef BRICLI_H
-#define BRICLI_H
+#ifndef BRICLI_API_H
+#define BRICLI_API_H
 
-#include "bricli_config.h"
-#include <bricli/options.h>
 #include <bricli/types.h>
-#include <bricli/api.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
 
+	BricliError_t Bricli_Init(Bricli_t *cli, BricliInit_t *init);
+	BricliError_t Bricli_Parse(uint8_t *buffer, uint32_t length);
 
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-#endif // BRICLI_H
+#endif // BRICLI_API_H
+
