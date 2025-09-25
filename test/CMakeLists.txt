@@ -1,56 +1,70 @@
-# ===================
-# == Project Setup ==
-# ===================
+cmake_minimum_required(VERSION 3.11)
 
-# Ensure our CMake version is met
-cmake_minimum_required(VERSION  3.21)
+# ---- Project Settings ----
+project(BriCLI VERSION 1.0
+                     DESCRIPTION "A lightweight C Command Line Interface"
+                     LANGUAGES C CXX)
 
-# Ensure we have a valid APP_VERSION_BASE to work with
-if (NOT APP_VERSION_BASE)
-	set(APP_VERSION_BASE 0.0.0)
-endif() # NOT APP_VERSION_BASE
+# GoogleTest requires at least C++11
+set(CMAKE_CXX_STANDARD 11)
 
-# Setup the test project declaration
-project(BriCLI_test
-	VERSION ${APP_VERSION_BASE}
-	LANGUAGES C CXX
-)
+# Build flags to enable code coverage tests.
+SET(GCC_COVERAGE_COMPILE_FLAGS -fprofile-arcs -ftest-coverage -Wall -DUNIT_TEST)
+SET(GCC_COVERAGE_LINK_FLAGS    -fprofile-arcs -lgcov)
 
-# Project options
-option(${PROJECT_NAME}_GENERATE_COVERAGE "Enable to build code coverage information from these unit tests" OFF)
+# Set up directory paths
+set(SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/../Source)
+set(INC_DIR ${CMAKE_CURRENT_LIST_DIR}/../Include ${CMAKE_CURRENT_LIST_DIR}/../Config)
+set(LIB_DIR ${CMAKE_CURRENT_LIST_DIR}/Lib)
+set(TEST_DIR ${CMAKE_CURRENT_LIST_DIR})
+set(MOCK_DIR ${TEST_DIR}/Mocks)
+set(GTEST_DIR ${LIB_DIR}/googletest)
 
-# Root directory for finding application files
-set(APP_ROOT_DIRECTORY ${PROJECT_SOURCE_DIR}/..)
+# Add the GoogleTest library
+add_subdirectory(${GTEST_DIR})
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 
-# ===================
-# == Test Settings ==
-# ===================
-
-find_package(Catch2 3 REQUIRED)
-include(CTest)
-include(Catch)
+# ---- Configure Tetsting ----
 enable_testing()
 
-# Top level target to enable test only builds
-add_custom_target(${PROJECT_NAME})
+# Enable debug symbols
+set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
-add_executable(ParserTest
-  ${APP_ROOT_DIRECTORY}/src/bricli.c
-  ${PROJECT_SOURCE_DIR}/ParserTest.cpp
+# Add the receive test.
+add_executable(receive-test
+    ${SRC_DIR}/bricli.c
+    ${TEST_DIR}/TestReceive.cpp
 )
-target_include_directories(ParserTest PRIVATE 
-	${APP_ROOT_DIRECTORY}/inc
-	${APP_ROOT_DIRECTORY}/config
-	${PROJECT_SOURCE_DIR}/lib
-	)
-target_link_libraries(ParserTest PRIVATE Catch2::Catch2WithMain)
-list(APPEND tests ParserTest)
+target_include_directories(receive-test PUBLIC ${INC_DIR} ${LIB_DIR} ${SRC_DIR})
+target_link_libraries(receive-test gtest_main)
+target_compile_options(receive-test PRIVATE ${GCC_COVERAGE_COMPILE_FLAGS})
+target_link_options(receive-test PRIVATE ${GCC_COVERAGE_LINK_FLAGS})
 
-# ====================
-# == Test Discovery ==
-# ====================
-foreach(test ${tests})
-	catch_discover_tests(${test})
-	add_dependencies(${PROJECT_NAME} ${test})
-	message(STATUS "Found test: ${test}")
-endforeach() # (test ${tests})
+# Add the send test.
+add_executable(send-test
+    ${SRC_DIR}/bricli.c
+    ${TEST_DIR}/TestSend.cpp
+)
+target_include_directories(send-test PUBLIC ${INC_DIR} ${LIB_DIR} ${SRC_DIR})
+target_link_libraries(send-test gtest_main)
+target_compile_options(send-test PRIVATE ${GCC_COVERAGE_COMPILE_FLAGS})
+target_link_options(send-test PRIVATE ${GCC_COVERAGE_LINK_FLAGS})
+
+# Add the handlers test.
+add_executable(handler-test
+    ${SRC_DIR}/bricli.c
+    ${TEST_DIR}/TestHandlers.cpp
+)
+target_include_directories(handler-test PUBLIC ${INC_DIR} ${LIB_DIR} ${SRC_DIR})
+target_link_libraries(handler-test gtest_main)
+target_compile_options(handler-test PRIVATE ${GCC_COVERAGE_COMPILE_FLAGS})
+target_link_options(handler-test PRIVATE ${GCC_COVERAGE_LINK_FLAGS})
+
+# ---- Discover all GoogleTest binaries ----
+include(GoogleTest)
+gtest_discover_tests(receive-test PROPERTIES TEST_LIST unitTests)
+gtest_discover_tests(send-test PROPERTIES TEST_LIST unitTests)
+gtest_discover_tests(handler-test PROPERTIES TEST_LIST unitTests)
+
+# Ensure all our tests will return a negative error code on failure
+set_tests_properties(${unitTests} PROPERTIES WILL_FAIL TRUE)
