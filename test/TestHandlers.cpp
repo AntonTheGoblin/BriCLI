@@ -15,7 +15,7 @@ DEFINE_FFF_GLOBALS;
 FAKE_VALUE_FUNC(int, BspWrite, uint32_t, const char*);
 FAKE_VALUE_FUNC(int, Test_Handler, uint32_t, char **);
 FAKE_VALUE_FUNC(int, Argument_Handler, uint32_t, char **);
-FAKE_VOID_FUNC(Test_StateChanged, BriCLIStates_t, BriCLIStates_t);
+FAKE_VOID_FUNC(Test_StateChanged, BricliStates_t, BricliStates_t);
 
 namespace Cli {
 
@@ -33,12 +33,12 @@ namespace Cli {
     class HandlerTest: public ::testing::Test
     {
     protected:
-        BriCLICommand_t _commandList[2] =
+        BricliCommand_t _commandList[2] =
         {
             {"test", Test_Handler, "Tests."},
             {"args", Argument_Handler, "Test Arguments"}
         };
-        BriCLIHandle_t _cli = BRICLI_HANDLE_DEFAULT;
+        BricliHandle_t _cli = BRICLI_HANDLE_DEFAULT;
         char _buffer[100] = {0};
 
         HandlerTest() { }
@@ -53,9 +53,9 @@ namespace Cli {
             RESET_FAKE(Test_StateChanged);
 
             // Pre-load return values for the fakes.
-            BspWrite_fake.return_val = (int)BriCLIOk;
-            Test_Handler_fake.return_val = (int)BriCLIOk;
-            Argument_Handler_fake.return_val = (int)BriCLIOk;
+            BspWrite_fake.return_val = (int)BricliOk;
+            Test_Handler_fake.return_val = (int)BricliOk;
+            Argument_Handler_fake.return_val = (int)BricliOk;
 
             // Configure our default BriCLI settings.
             _cli.CommandList = _commandList;
@@ -68,48 +68,48 @@ namespace Cli {
 
         virtual void TearDown() 
         {
-            BriCLI_ClearBuffer(&_cli);
+            Bricli_ClearBuffer(&_cli);
         }
     };
 
     TEST_F(HandlerTest, ReceiveHandler)
     {
         std::string testCommand("test\n");
-        BriCLIErrors_t error = BriCLIUnknown;
+        BricliErrors_t error = BricliUnknown;
 
         // Receive the command.
-        error = BriCLI_ReceiveArray(&_cli, testCommand.length(), (char *)testCommand.c_str());
-        EXPECT_EQ(error, BriCLIOk);
+        error = Bricli_ReceiveArray(&_cli, testCommand.length(), (char *)testCommand.c_str());
+        EXPECT_EQ(error, BricliOk);
 
         // Parse it, expecting the test handler to be called.
-        error = (BriCLIErrors_t)BriCLI_Parse(&_cli);
-        EXPECT_EQ(error, BriCLIOk);
+        error = (BricliErrors_t)Bricli_Parse(&_cli);
+        EXPECT_EQ(error, BricliOk);
         EXPECT_EQ(Test_Handler_fake.call_count, 1);
-        EXPECT_EQ(_cli.State, BriCLIIdle);
+        EXPECT_EQ(_cli.State, BricliStateIdle);
 
         // Make sure our states were correctly changed as a result of the Parse call.
         EXPECT_EQ(Test_StateChanged_fake.call_count, 4);
 
         // Idle -> Parsing
-        EXPECT_EQ(Test_StateChanged_fake.arg0_history[0], BriCLIIdle);
-        EXPECT_EQ(Test_StateChanged_fake.arg1_history[0], BriCLIParsing);
+        EXPECT_EQ(Test_StateChanged_fake.arg0_history[0], BricliStateIdle);
+        EXPECT_EQ(Test_StateChanged_fake.arg1_history[0], BricliStateParsing);
 
         // Parsing -> Handler
-        EXPECT_EQ(Test_StateChanged_fake.arg0_history[1], BriCLIParsing);
-        EXPECT_EQ(Test_StateChanged_fake.arg1_history[1], BriCLIHandlerRunning);
+        EXPECT_EQ(Test_StateChanged_fake.arg0_history[1], BricliStateParsing);
+        EXPECT_EQ(Test_StateChanged_fake.arg1_history[1], BricliStateHandlerRunning);
 
         // Handler -> Finished
-        EXPECT_EQ(Test_StateChanged_fake.arg0_history[2], BriCLIHandlerRunning);
-        EXPECT_EQ(Test_StateChanged_fake.arg1_history[2], BriCLIFinished);
+        EXPECT_EQ(Test_StateChanged_fake.arg0_history[2], BricliStateHandlerRunning);
+        EXPECT_EQ(Test_StateChanged_fake.arg1_history[2], BricliStateFinished);
 
         // Finished -> Idle
-        EXPECT_EQ(Test_StateChanged_fake.arg0_history[3], BriCLIFinished);
-        EXPECT_EQ(Test_StateChanged_fake.arg1_history[3], BriCLIIdle);
+        EXPECT_EQ(Test_StateChanged_fake.arg0_history[3], BricliStateFinished);
+        EXPECT_EQ(Test_StateChanged_fake.arg1_history[3], BricliStateIdle);
 
         // Receive a partial command and make sure the handler isn't called.
-        BriCLI_ReceiveArray(&_cli, (testCommand.length() - 1), (char *)testCommand.c_str());
-        error = (BriCLIErrors_t)BriCLI_Parse(&_cli);
-        EXPECT_EQ(error, BriCLIOk);
+        Bricli_ReceiveArray(&_cli, (testCommand.length() - 1), (char *)testCommand.c_str());
+        error = (BricliErrors_t)Bricli_Parse(&_cli);
+        EXPECT_EQ(error, BricliOk);
         EXPECT_EQ(Test_Handler_fake.call_count, 1);
         EXPECT_EQ(Test_StateChanged_fake.call_count, 4);
     }
@@ -119,26 +119,26 @@ namespace Cli {
         std::string testCommandTwoArgs("args \"Hello World\" 43\n");
         std::string testCommandOneArgs("args 43\n");
         std::string testCommandNoArgs("args\n");
-        BriCLIErrors_t error = BriCLIUnknown;
+        BricliErrors_t error = BricliUnknown;
 
         // Receive the command.
-        error = BriCLI_ReceiveArray(&_cli, testCommandTwoArgs.length(), (char *)testCommandTwoArgs.c_str());
-        EXPECT_EQ(error, BriCLIOk);
+        error = Bricli_ReceiveArray(&_cli, testCommandTwoArgs.length(), (char *)testCommandTwoArgs.c_str());
+        EXPECT_EQ(error, BricliOk);
 
         // Parse and check the handler passed the arguments through ok.
-        error = (BriCLIErrors_t)BriCLI_Parse(&_cli);
+        error = (BricliErrors_t)Bricli_Parse(&_cli);
         EXPECT_EQ(Argument_Handler_fake.call_count, 1);
         EXPECT_EQ(2, Argument_Handler_fake.arg0_val);
-        EXPECT_EQ(error, BriCLIOk);
+        EXPECT_EQ(error, BricliOk);
 
         // Repeat with 1 and 0 arguments.
-        BriCLI_ReceiveArray(&_cli, testCommandOneArgs.length(), (char *)testCommandOneArgs.c_str());
-        BriCLI_Parse(&_cli);
+        Bricli_ReceiveArray(&_cli, testCommandOneArgs.length(), (char *)testCommandOneArgs.c_str());
+        Bricli_Parse(&_cli);
         EXPECT_EQ(Argument_Handler_fake.call_count, 2);
         EXPECT_EQ(1, Argument_Handler_fake.arg0_val);
 
-        BriCLI_ReceiveArray(&_cli, testCommandNoArgs.length(), (char *)testCommandNoArgs.c_str());
-        BriCLI_Parse(&_cli);
+        Bricli_ReceiveArray(&_cli, testCommandNoArgs.length(), (char *)testCommandNoArgs.c_str());
+        Bricli_Parse(&_cli);
         EXPECT_EQ(Argument_Handler_fake.call_count, 3);
         EXPECT_EQ(0, Argument_Handler_fake.arg0_val);
     }
@@ -148,47 +148,47 @@ namespace Cli {
         std::string twoCommands("test\ntest\n");
         std::string threeCommands("test\nargs 124\ntest");
         std::string twoArgsCommands("args 1 \"Hello\"\nargs 2 \"World\"\n");
-        BriCLIErrors_t error = BriCLIUnknown;
+        BricliErrors_t error = BricliUnknown;
 
         // Receive the command.
-        error = BriCLI_ReceiveArray(&_cli, twoCommands.length(), (char *)twoCommands.c_str());
-        EXPECT_EQ(error, BriCLIOk);
+        error = Bricli_ReceiveArray(&_cli, twoCommands.length(), (char *)twoCommands.c_str());
+        EXPECT_EQ(error, BricliOk);
 
         // Parse and check both commands were handled.
-        error = (BriCLIErrors_t)BriCLI_Parse(&_cli);
+        error = (BricliErrors_t)Bricli_Parse(&_cli);
         EXPECT_EQ(Test_Handler_fake.call_count, 2);
         EXPECT_EQ(_cli.PendingBytes, 0);
-        EXPECT_EQ(error, BriCLIOk);
+        EXPECT_EQ(error, BricliOk);
 
         // Receive the triple command
-        error = BriCLI_ReceiveArray(&_cli, threeCommands.length(), (char *)threeCommands.c_str());
-        EXPECT_EQ(error, BriCLIOk);
+        error = Bricli_ReceiveArray(&_cli, threeCommands.length(), (char *)threeCommands.c_str());
+        EXPECT_EQ(error, BricliOk);
 
-        error = (BriCLIErrors_t)BriCLI_Parse(&_cli);
+        error = (BricliErrors_t)Bricli_Parse(&_cli);
         EXPECT_EQ(Test_Handler_fake.call_count, 4);
         EXPECT_EQ(Argument_Handler_fake.call_count, 1);
         EXPECT_EQ(_cli.PendingBytes, 0);
-        EXPECT_EQ(error, BriCLIOk);
+        EXPECT_EQ(error, BricliOk);
 
         // Receive the dual arguments command
-        error = BriCLI_ReceiveArray(&_cli, twoArgsCommands.length(), (char *)twoArgsCommands.c_str());
-        EXPECT_EQ(error, BriCLIOk);
+        error = Bricli_ReceiveArray(&_cli, twoArgsCommands.length(), (char *)twoArgsCommands.c_str());
+        EXPECT_EQ(error, BricliOk);
 
-        error = (BriCLIErrors_t)BriCLI_Parse(&_cli);
+        error = (BricliErrors_t)Bricli_Parse(&_cli);
         EXPECT_EQ(Argument_Handler_fake.call_count, 3);
         EXPECT_EQ(_cli.PendingBytes, 0);
-        EXPECT_EQ(error, BriCLIOk);
+        EXPECT_EQ(error, BricliOk);
     }
 
     TEST_F(HandlerTest, CommandNotFound)
     {
         std::string testCommand("abcdef\n");
-        BriCLIErrors_t error = BriCLIUnknown;
+        BricliErrors_t error = BricliUnknown;
 
         // Receive the command.
-        BriCLI_ReceiveArray(&_cli, testCommand.length(), (char *)testCommand.c_str());
-        error = (BriCLIErrors_t)BriCLI_Parse(&_cli);
-        EXPECT_EQ(error, BriCLIBadCommand);
+        Bricli_ReceiveArray(&_cli, testCommand.length(), (char *)testCommand.c_str());
+        error = (BricliErrors_t)Bricli_Parse(&_cli);
+        EXPECT_EQ(error, BricliBadCommand);
 
         // Should have 8 calls: Error, 4 help messages with 2 automatic eols, Prompt
         EXPECT_EQ(BspWrite_fake.call_count, 8);
@@ -202,20 +202,20 @@ namespace Cli {
         std::string errorCommand("test\n");
         int testErrorCode = -3;
         std::string errorString("Command returned error: -3\n");
-        BriCLIErrors_t error = BriCLIUnknown;
+        BricliErrors_t error = BricliUnknown;
 
         // Receive the command.
-        error = BriCLI_ReceiveArray(&_cli, errorCommand.length(), (char *)errorCommand.c_str());
-        EXPECT_EQ(error, BriCLIOk);
+        error = Bricli_ReceiveArray(&_cli, errorCommand.length(), (char *)errorCommand.c_str());
+        EXPECT_EQ(error, BricliOk);
 
         // Configure the fake to return an error.
         Test_Handler_fake.return_val = testErrorCode;
 
         // Test that the handler is called and the error propagated.
-        error = (BriCLIErrors_t)BriCLI_Parse(&_cli);
+        error = (BricliErrors_t)Bricli_Parse(&_cli);
         EXPECT_EQ(Test_Handler_fake.call_count, 1);
         EXPECT_EQ((int)error, testErrorCode);
-        EXPECT_EQ(_cli.LastError, BriCLIErrorCommand);
+        EXPECT_EQ(_cli.LastError, BricliErrorCommand);
         EXPECT_EQ(BspWrite_fake.call_count, 4);
     }
 }

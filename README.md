@@ -54,7 +54,7 @@ BriCLI is contained entirely in a single source and header pair, simply copy the
 ### Initialisation
 The basic pre-requisites for using BriCLI are the command list, the CLI settings, the BspWrite function and the RX buffer.
 ```c
-static BriCLICommand_t _commandList[] =
+static BricliCommand_t _commandList[] =
 {
     {"ping", Ping_Handler, "Responds with Pong."},
     {"add", Add_Handler, "Adds two numbers together and prints the response."},
@@ -63,9 +63,9 @@ static BriCLICommand_t _commandList[] =
 
 int main(void)
 {
-    BriCLIHandle_t cli = BRICLI_HANDLE_DEFAULT;
+    BricliHandle_t cli = BRICLI_HANDLE_DEFAULT;
     cli.Eol = "\r";     
-    cli.SendEol = NULL; // Set this to have BriCLI use a different EoL in BriCLI_WriteLine* functions.
+    cli.SendEol = NULL; // Set this to have BriCLI use a different EoL in Bricli_WriteLine* functions.
     cli.BspWrite = Bsp_Write;
     cli.CommandList = _commandList;
     cli.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
@@ -102,13 +102,13 @@ void SomeTask()
 
         // As of v2.2.0 this is only needed when cli.LocalEcho is false
         // Echo the character back to the terminal.
-        // BriCLI_Write(&cli, 1, &rxChar);
+        // Bricli_Write(&cli, 1, &rxChar);
 
         // Store the character in BriCLI's buffer
-        BriCLI_ReceiveCharacter(&cli, rxChar);
+        Bricli_ReceiveCharacter(&cli, rxChar);
 
         // Let BriCLI handle parsing
-        BriCLI_Parse(&cli);
+        Bricli_Parse(&cli);
     }
 }
 ```
@@ -125,8 +125,8 @@ However, this functionality can be overwritten by setting `SendEol` to a non-NUL
 // \n should be received and sent
 cli.Eol = "\n";
 
-BriCLI_Parse(&cli); // This will look for \n
-BriCLI_WriteStringLine(&cli, "Hello World") // This will send "Hello World\n"
+Bricli_Parse(&cli); // This will look for \n
+Bricli_WriteStringLine(&cli, "Hello World") // This will send "Hello World\n"
 ```
 
 #### Seperate operation with Eol and SendEol
@@ -135,28 +135,28 @@ BriCLI_WriteStringLine(&cli, "Hello World") // This will send "Hello World\n"
 cli.Eol = "\n"
 cli.SendEol = "\r"
 
-BriCLI_Parse(&cli); // This will look for \n
-BriCLI_WriteStringLine(&cli, "Hello World") // This will send "Hello World\r"
+Bricli_Parse(&cli); // This will look for \n
+Bricli_WriteStringLine(&cli, "Hello World") // This will send "Hello World\r"
 ```
 
 ### Custom Parsing
-If you need more finite control over the EOL checking or command parsing you can manually implement <code>BriCLI_Parse()</code> as below.
+If you need more finite control over the EOL checking or command parsing you can manually implement <code>Bricli_Parse()</code> as below.
 ```c
 size_t numberOfCommands;
-int result = BriCLIOk;
+int result = BricliOk;
 
 // Look for an EOL, repeating for as long as we have commands in the buffer.
-numberOfCommands = BriCLI_SplitOnEol(cli);
+numberOfCommands = Bricli_SplitOnEol(cli);
 while(numberOfCommands > 0)
 {
     // Handle the command.
-    result = BriCLI_ParseCommand(cli);
+    result = Bricli_ParseCommand(cli);
 
     // Remove the command we just handled
-    BriCLI_ClearCommand(cli);
+    Bricli_ClearCommand(cli);
 
     // Reset our internal state.
-    BriCLI_ChangeState(cli, BriCLIIdle);
+    Bricli_ChangeState(cli, BricliStateIdle);
 
     // Track that we have handled this command.
     numberOfCommands--;
@@ -164,12 +164,12 @@ while(numberOfCommands > 0)
     // If we just handled the last command send the CLI prompt.
     if (numberOfCommands == 0)
     {
-        BriCLI_SendPrompt(cli);
+        Bricli_SendPrompt(cli);
     }
 }
 return result;
 ```
-This approach also lets you pass false to <code>BriCLI_CheckForEol</code> to prevent BriCLI from altering the RX Buffer should you need to.
+This approach also lets you pass false to <code>Bricli_CheckForEol</code> to prevent BriCLI from altering the RX Buffer should you need to.
 
 ### State Change Events
 Internally, BriCLI tracks 4 different states:
@@ -181,11 +181,11 @@ Internally, BriCLI tracks 4 different states:
 
 Users can monitor these state changes through the CLI handle's `OnStateChanged` event. This event is fired anytime a state change occurs and provides the old and new states as parameters.
 
-To subscribe to the event simple provide a callback function with the `BriCLI_StateChanged` prototype.
+To subscribe to the event simple provide a callback function with the `Bricli_StateChanged` prototype.
 
 ```c
 // Example user function implementing the callback.
-void MyStateChanged(BriCLIStates_t oldState, BriCLIStates_t newState)
+void MyStateChanged(BricliStates_t oldState, BricliStates_t newState)
 {
     if (newState == BriCLIRunningHandler)
     {
@@ -198,7 +198,7 @@ int main()
 {
     // ...
     
-    BriCLIHandle_t myCli = BRICLI_HANDLE_DEFAULT;
+    BricliHandle_t myCli = BRICLI_HANDLE_DEFAULT;
     myCli.OnStateChanged = MyStateChanged;
 
     // ...
@@ -206,7 +206,7 @@ int main()
 ```
 
 ### Command Handlers
-Command handlers should follow the <code>BriCLI_CommandHandler</code> format, a simple addition handler is shown below.
+Command handlers should follow the <code>Bricli_CommandHandler</code> format, a simple addition handler is shown below.
 
 Negative return codes will automatically be handled as errors by BriCLI, so ensure all success codes are zero or greater.
 ```c
@@ -215,7 +215,7 @@ int Add_Handler(uint32_t numberOfArgs, char* args[])
   // Make sure we have enough arguments.
   if (numberOfArgs < 2)
   {
-    BriCLI_WriteString(&cli, "Must provide 2 arguments!\n");
+    Bricli_WriteString(&cli, "Must provide 2 arguments!\n");
     return -1;
   }
 
@@ -225,13 +225,13 @@ int Add_Handler(uint32_t numberOfArgs, char* args[])
 
   // Calculate the addition and return.
   int result = a + b;
-  BriCLI_PrintF(&cli, "%d + %d = %d\n", a, b, result);
+  Bricli_PrintF(&cli, "%d + %d = %d\n", a, b, result);
   return 0;
 }
 ```
 
 ### Command List
-The command list is defined by the <code>BriCLICommand_t</code> type. There are three members of this type:
+The command list is defined by the <code>BricliCommand_t</code> type. There are three members of this type:
 
 - Name: This is the command text that the user must enter
 - Handler: This is a pointer to the function that will be executed when this command is found.

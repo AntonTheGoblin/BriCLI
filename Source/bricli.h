@@ -182,79 +182,79 @@ extern "C" {
 
 /* TYPE DEFINITIONS */
 
-typedef enum _BriCLILastError_t
+typedef enum _BricliLastError_t
 {
-    BriCLIErrorNone,
-    BriCLIErrorInternal,
-    BriCLIErrorCommand
-} BriCLILastError_t;
+    BricliErrorNone,
+    BricliErrorInternal,
+    BricliErrorCommand
+} BricliLastError_t;
 
-typedef enum _BriCLIErrors_t
+typedef enum _BricliErrors_t
 {
-    BriCLIUnknown            = -7,
-    BriCLIReceivedNull       = -6,
-    BriCLICopyWouldOverflow  = -5,
-    BriCLIBadCommand         = -4,
-    BriCLIBadParameter       = -3,
-    BriCLIBadHandle          = -2,
-    BriCLIBadFunction        = -1,
-    BriCLIOk                 = 0
-} BriCLIErrors_t;
+    BricliUnknown            = -7,
+    BricliReceivedNull       = -6,
+    BricliCopyWouldOverflow  = -5,
+    BricliBadCommand         = -4,
+    BricliBadParameter       = -3,
+    BricliBadHandle          = -2,
+    BricliBadFunction        = -1,
+    BricliOk                 = 0
+} BricliErrors_t;
 
 /**
  * @brief Enumerated VT100 colour options
  */
-typedef enum _BriCLIColours_t
+typedef enum _BricliColours_t
 {
-    BriCLITextBlack,
-    BriCLITextRed,
-    BriCLITextGreen,
-    BriCLITextYellow,
-    BriCLITextBlue,
-    BriCLITextMagenta,
-    BriCLITextCyan,
-    BriCLITextWhite,
+    BricliTextBlack,
+    BricliTextRed,
+    BricliTextGreen,
+    BricliTextYellow,
+    BricliTextBlue,
+    BricliTextMagenta,
+    BricliTextCyan,
+    BricliTextWhite,
 
-    BriCLITextBoldBlack,
-    BriCLITextBoldRed,
-    BriCLITextBoldGreen,
-    BriCLITextBoldYellow,
-    BriCLITextBoldBlue,
-    BriCLITextBoldMagenta,
-    BriCLITextBoldCyan,
-    BriCLITextBoldWhite,
+    BricliTextBoldBlack,
+    BricliTextBoldRed,
+    BricliTextBoldGreen,
+    BricliTextBoldYellow,
+    BricliTextBoldBlue,
+    BricliTextBoldMagenta,
+    BricliTextBoldCyan,
+    BricliTextBoldWhite,
 
-    BriCLIUnderlineBlack,
-    BriCLIUnderlineRed,
-    BriCLIUnderlineGreen,
-    BriCLIUnderlineYellow,
-    BriCLIUnderlineBlue,
-    BriCLIUnderlineMagenta,
-    BriCLIUnderlineCyan,
-    BriCLIUnderlineWhite,
+    BricliUnderlineBlack,
+    BricliUnderlineRed,
+    BricliUnderlineGreen,
+    BricliUnderlineYellow,
+    BricliUnderlineBlue,
+    BricliUnderlineMagenta,
+    BricliUnderlineCyan,
+    BricliUnderlineWhite,
 
-    BriCLIBackgroundBlack,
-    BriCLIBackgroundRed,
-    BriCLIBackgroundGreen,
-    BriCLIBackgroundYellow,
-    BriCLIBackgroundBlue,
-    BriCLIBackgroundMagenta,
-    BriCLIBackgroundCyan,
-    BriCLIBackgroundWhite,
+    BricliBackgroundBlack,
+    BricliBackgroundRed,
+    BricliBackgroundGreen,
+    BricliBackgroundYellow,
+    BricliBackgroundBlue,
+    BricliBackgroundMagenta,
+    BricliBackgroundCyan,
+    BricliBackgroundWhite,
 
-    BriCLIColourReset
-} BriCLIColours_t;
+    BricliColourReset
+} BricliColours_t;
 
 /**
  * @brief States that BriCLI can be in during execution.
  */
-typedef enum _BriCLIStates_t
+typedef enum _BricliStates_t
 {
-    BriCLIIdle,            // BriCLI is idle and receiving characters.
-    BriCLIParsing,         // BriCLI is parsing a buffer looking a valid handler to run.
-    BriCLIHandlerRunning,  // BriCLI is executing a command handler.
-    BriCLIFinished
-} BriCLIStates_t;
+    BricliStateIdle,            // BriCLI is idle and receiving characters.
+    BricliStateParsing,         // BriCLI is parsing a buffer looking a valid handler to run.
+    BricliStateHandlerRunning,  // BriCLI is executing a command handler.
+    BricliStateFinished
+} BricliStates_t;
 
 /**
  * @brief BSP function for writing data.
@@ -281,7 +281,7 @@ typedef int (*Bricli_CommandHandler)(uint32_t numberOfArgs, char* args[]);
  * @param oldState The state of BriCLI before the change.
  * @param newState The state BriCLI changed to.
  */
-typedef void (*Bricli_StateChanged)(BriCLIStates_t oldState, BriCLIStates_t newState);
+typedef void (*Bricli_StateChanged)(BricliStates_t oldState, BricliStates_t newState);
 
 /**
  * @brief Holds specific details for a command entry used by this CLI.
@@ -308,7 +308,7 @@ typedef struct _BricliCommand_t
  */
 typedef struct _BricliHandle_t
 {
-    BriCLILastError_t      LastError;
+    BricliLastError_t      LastError;
     BricliCommand_t*       CommandList;
     uint32_t                CommandListLength;
     Bricli_BspWrite        BspWrite;
@@ -318,7 +318,7 @@ typedef struct _BricliHandle_t
     uint32_t                PendingBytes;
     char*                   Prompt;
     bool                    IsHandlingEscape;
-    BriCLIStates_t         State;
+    BricliStates_t         State;
     Bricli_StateChanged    OnStateChanged;
     bool                    LocalEcho;
     char *                  SendEol;
@@ -327,20 +327,20 @@ typedef struct _BricliHandle_t
 /**
  * @brief Default settings for BriCLI for quick initialisation.
  */
-#define BRICLI_HANDLE_DEFAULT { BriCLIErrorNone, NULL, 0, NULL, (char*)"\n", NULL, 0, 0, (char*)">> ", false, BriCLIIdle, NULL, false, NULL }
+#define BRICLI_HANDLE_DEFAULT { BricliErrorNone, NULL, 0, NULL, (char*)"\n", NULL, 0, 0, (char*)">> ", false, BricliStateIdle, NULL, false, NULL }
 
 /* FUNCTION DECLARATIONS */
 
 int Bricli_ParseCommand(BricliHandle_t* cli);
 int Bricli_Parse(BricliHandle_t* cli);
-BriCLIErrors_t Bricli_ReceiveCharacter(BricliHandle_t* cli, char rxChar);
-BriCLIErrors_t Bricli_ReceiveIndexedArray(BricliHandle_t *cli, uint32_t index, uint32_t length, char *array);
+BricliErrors_t Bricli_ReceiveCharacter(BricliHandle_t* cli, char rxChar);
+BricliErrors_t Bricli_ReceiveIndexedArray(BricliHandle_t *cli, uint32_t index, uint32_t length, char *array);
 bool Bricli_CheckForEol(BricliHandle_t* cli, bool replaceEol);
 void Bricli_Backspace(BricliHandle_t* cli);
 size_t Bricli_SplitOnEol(BricliHandle_t *cli);
 int Bricli_PrintHelp(BricliHandle_t* cli);
 int Bricli_PrintF(BricliHandle_t* cli, const char* format, ...);
-void Bricli_SetColour(BricliHandle_t* cli, BriCLIColours_t colourId);
+void Bricli_SetColour(BricliHandle_t* cli, BricliColours_t colourId);
 void Bricli_Reset(BricliHandle_t *cli);
 void Bricli_ClearCommand(BricliHandle_t *cli);
 
@@ -354,7 +354,7 @@ void Bricli_ClearCommand(BricliHandle_t *cli);
  *
  * @return The error code from the instance's BSP write.
  */
-#define BRICLI_PRINTF_COLOURED(cli, colour, format, ...) ({ Bricli_SetColour(cli, colour); int macroResult = Bricli_PrintF(cli, format, __VA_ARGS__); Bricli_SetColour(cli, BriCLIColourReset); macroResult; })
+#define BRICLI_PRINTF_COLOURED(cli, colour, format, ...) ({ Bricli_SetColour(cli, colour); int macroResult = Bricli_PrintF(cli, format, __VA_ARGS__); Bricli_SetColour(cli, BricliColourReset); macroResult; })
 
 /**
 * @brief Helper function for writing out data on the CLI's write function.
@@ -374,8 +374,8 @@ static inline int Bricli_Write(BricliHandle_t* cli, uint32_t length, const char*
     }
     else
     {
-        cli->LastError = BriCLIErrorInternal;
-        return BriCLIBadHandle;
+        cli->LastError = BricliErrorInternal;
+        return BricliBadHandle;
     }
 }
 
@@ -413,11 +413,11 @@ static inline int Bricli_WriteLine(BricliHandle_t* cli, uint32_t length, const c
 *
 * @return An error code, negative indicates a problem occurred.
 */
-static inline int Bricli_WriteColoured(BricliHandle_t* cli, uint32_t length, const char* data, BriCLIColours_t colour)
+static inline int Bricli_WriteColoured(BricliHandle_t* cli, uint32_t length, const char* data, BricliColours_t colour)
 {
     Bricli_SetColour(cli, colour);
     int writeColouredResult = Bricli_Write(cli, length, data);
-    Bricli_SetColour(cli, BriCLIColourReset);
+    Bricli_SetColour(cli, BricliColourReset);
     return writeColouredResult;
 }
 
@@ -431,11 +431,11 @@ static inline int Bricli_WriteColoured(BricliHandle_t* cli, uint32_t length, con
 *
 * @return An error code, negative indicates a problem occurred.
 */
-static inline int Bricli_WriteColouredLine(BricliHandle_t* cli, uint32_t length, const char* data, BriCLIColours_t colour)
+static inline int Bricli_WriteColouredLine(BricliHandle_t* cli, uint32_t length, const char* data, BricliColours_t colour)
 {
     Bricli_SetColour(cli, colour);
     int writeColouredResult = Bricli_WriteLine(cli, length, data);
-    Bricli_SetColour(cli, BriCLIColourReset);
+    Bricli_SetColour(cli, BricliColourReset);
     return writeColouredResult;
 }
 
@@ -475,11 +475,11 @@ static inline int Bricli_WriteStringLine(BricliHandle_t* cli, const char* data)
 *
 * @return An error code, negative indicates a problem occurred.
 */
-static inline int Bricli_WriteStringColoured(BricliHandle_t* cli, const char* data, BriCLIColours_t colour)
+static inline int Bricli_WriteStringColoured(BricliHandle_t* cli, const char* data, BricliColours_t colour)
 {
     Bricli_SetColour(cli, colour);
     int result = Bricli_Write(cli, strlen(data), data);
-    Bricli_SetColour(cli, BriCLIColourReset);
+    Bricli_SetColour(cli, BricliColourReset);
     return result;
 }
 
@@ -492,11 +492,11 @@ static inline int Bricli_WriteStringColoured(BricliHandle_t* cli, const char* da
 *
 * @return An error code, negative indicates a problem occurred.
 */
-static inline int Bricli_WriteStringColouredLine(BricliHandle_t* cli, const char* data, BriCLIColours_t colour)
+static inline int Bricli_WriteStringColouredLine(BricliHandle_t* cli, const char* data, BricliColours_t colour)
 {
     Bricli_SetColour(cli, colour);
     int result = Bricli_WriteStringLine(cli, data);
-    Bricli_SetColour(cli, BriCLIColourReset);
+    Bricli_SetColour(cli, BricliColourReset);
     return result;
 }
 
@@ -543,7 +543,7 @@ static inline void Bricli_ClearScreen(BricliHandle_t* cli)
 *
 * @return An error code, negative indicates a problem occurred.
 */
-static inline BriCLIErrors_t Bricli_ReceiveArray(BricliHandle_t *cli, uint32_t length, char *array)
+static inline BricliErrors_t Bricli_ReceiveArray(BricliHandle_t *cli, uint32_t length, char *array)
 {
     return Bricli_ReceiveIndexedArray(cli, 0, length, array);
 }

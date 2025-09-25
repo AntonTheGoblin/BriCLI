@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.11)
 
 # ---- Project Settings ----
-project(BriCLI_Example VERSION 1.0
+project(Bricli_Example VERSION 1.0
                         DESCRIPTION "BriCLI Generic Example."
                         LANGUAGES C
 )

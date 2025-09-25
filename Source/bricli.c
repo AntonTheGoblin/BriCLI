@@ -169,9 +169,9 @@ static uint32_t Bricli_ExtractArguments(char *arguments, char *output[])
  * @param cli Pointer to the BriCLI instance to use.
  * @param newState The new state to set on the BriCLI instance.
  */
-static inline void Bricli_ChangeState(BricliHandle_t* cli, BriCLIStates_t newState)
+static inline void Bricli_ChangeState(BricliHandle_t* cli, BricliStates_t newState)
 {
-    BriCLIStates_t currentState = cli->State;
+    BricliStates_t currentState = cli->State;
 
     // Update our state and call the OnStateChanged event if set.
     cli->State = newState;
@@ -189,41 +189,41 @@ static inline void Bricli_ChangeState(BricliHandle_t* cli, BriCLIStates_t newSta
  *
  * @param colourId The enum ID of the colour option to be written.
  */
-void Bricli_SetColour(BricliHandle_t *cli, BriCLIColours_t colourId)
+void Bricli_SetColour(BricliHandle_t *cli, BricliColours_t colourId)
 {
     char *colourMessage = NULL;
 
     // Reset the VT100 terminal colour settings.
-    if (colourId == BriCLIColourReset)
+    if (colourId == BricliColourReset)
     {
         colourMessage = (char *)_colourReset;
     }
 #if BRICLI_USE_TEXT_COLOURS
     // Text colours.
-    else if (colourId <= BriCLITextWhite)
+    else if (colourId <= BricliTextWhite)
     {
         colourMessage = (char *)_colourTable[colourId];
     }
 #endif // BRICLI_USE_TEXT_COLOURSs
 #if BRICLI_USE_BOLD
     // Bold colours
-    else if (colourId <= BriCLITextBoldWhite)
+    else if (colourId <= BricliTextBoldWhite)
     {
-        colourMessage = (char *)_boldTable[colourId - BriCLITextWhite];
+        colourMessage = (char *)_boldTable[colourId - BricliTextWhite];
     }
 #endif // BRICLI_USE_BOLD
 #if BRICLI_USE_UNDERLINE
     // Underline colours.
-    else if (colourId <= BriCLIUnderlineWhite)
+    else if (colourId <= BricliUnderlineWhite)
     {
-        colourMessage = (char *)_underlineTable[colourId - BriCLITextBoldWhite];
+        colourMessage = (char *)_underlineTable[colourId - BricliTextBoldWhite];
     }
 #endif // BRICLI_USE_UNDERLINE
 #if BRICLI_USE_BACKGROUNDS
     // Background colours.
-    else if (colourId <= BriCLIBackgroundWhite)
+    else if (colourId <= BricliBackgroundWhite)
     {
-        colourMessage = (char *)_backgroundTable[colourId - BriCLIUnderlineWhite];
+        colourMessage = (char *)_backgroundTable[colourId - BricliUnderlineWhite];
     }
 #endif // BRICLI_USE_BACKGROUNDS
 
@@ -243,7 +243,7 @@ int Bricli_ParseEscapeCode(BricliHandle_t *cli)
     //      // Up Arrow pressed.
     //    }
     (void)&cli;
-    return BriCLIOk;
+    return BricliOk;
 }
 
 /**
@@ -283,7 +283,7 @@ void Bricli_ClearCommand(BricliHandle_t *cli)
 int Bricli_Parse(BricliHandle_t *cli)
 {
     size_t numberOfCommands;
-    int result = BriCLIOk;
+    int result = BricliOk;
 
     // First do a non-invasive check for an EOL delimeter.
     if (!Bricli_CheckForEol(cli, false))
@@ -311,7 +311,7 @@ int Bricli_Parse(BricliHandle_t *cli)
         Bricli_ClearCommand(cli);
 
         // Reset our internal state.
-        Bricli_ChangeState(cli, BriCLIIdle);
+        Bricli_ChangeState(cli, BricliStateIdle);
 
         // Track that we have handled this command.
         numberOfCommands--;
@@ -346,17 +346,17 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
     // Error check our arguments.
     if (cli->RxBuffer == NULL)
     {
-        cli->LastError = BriCLIErrorInternal;
-        return BriCLIBadParameter;
+        cli->LastError = BricliErrorInternal;
+        return BricliBadParameter;
     }
     else if (cli == NULL || cli->CommandList == NULL)
     {
-        cli->LastError = BriCLIErrorInternal;
-        return BriCLIBadHandle;
+        cli->LastError = BricliErrorInternal;
+        return BricliBadHandle;
     }
 
     // Update our state.
-    Bricli_ChangeState(cli, BriCLIParsing);
+    Bricli_ChangeState(cli, BricliStateParsing);
 
     // If this is actually an escape sequence handle it separately.
     if (cli->RxBuffer[0] == '\e')
@@ -397,17 +397,17 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
     // Check if this is a system command first.
     if (strcmp(command, "help") == 0)
     {
-        Bricli_ChangeState(cli, BriCLIHandlerRunning);
+        Bricli_ChangeState(cli, BricliStateHandlerRunning);
         Bricli_PrintHelp(cli);
-        Bricli_ChangeState(cli, BriCLIFinished);
-        return BriCLIOk;
+        Bricli_ChangeState(cli, BricliStateFinished);
+        return BricliOk;
     }
     else if (strcmp(command, "clear") == 0)
     {
-        Bricli_ChangeState(cli, BriCLIHandlerRunning);
+        Bricli_ChangeState(cli, BricliStateHandlerRunning);
         Bricli_ClearScreen(cli);
-        Bricli_ChangeState(cli, BriCLIFinished);
-        return BriCLIOk;
+        Bricli_ChangeState(cli, BricliStateFinished);
+        return BricliOk;
     }
 
     // Not a system command so look to our command list for a match.
@@ -426,9 +426,9 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
             uint8_t numberOfArguments = Bricli_ExtractArguments(arguments, ArgumentsFound);
 
             // Call the command's handler function.
-            Bricli_ChangeState(cli, BriCLIHandlerRunning);
+            Bricli_ChangeState(cli, BricliStateHandlerRunning);
             int result = cliCommand->Handler(numberOfArguments, ArgumentsFound);
-            Bricli_ChangeState(cli, BriCLIFinished);
+            Bricli_ChangeState(cli, BricliStateFinished);
 
             // Check the result code.
             if (result < 0)
@@ -437,15 +437,15 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
 #if BRICLI_SHOW_COMMAND_ERRORS
                 if (cli->SendEol == NULL)
                 {
-                    BRICLI_PRINTF_COLOURED(cli, BriCLITextRed, "Command returned error: %d%s", result, cli->Eol);
+                    BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->Eol);
                 }
                 else
                 {
-                    BRICLI_PRINTF_COLOURED(cli, BriCLITextRed, "Command returned error: %d%s", result, cli->SendEol);
+                    BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->SendEol);
                 }
 #endif // BRICLI_SHOW_COMMAND_ERRORS
 
-                cli->LastError = BriCLIErrorCommand;
+                cli->LastError = BricliErrorCommand;
             }
             return result;
         }
@@ -467,8 +467,8 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
 #endif // BRICLI_SHOW_HELP_ON_ERROR
 
     // Return that this is an unknown command.
-    cli->LastError = BriCLIErrorInternal;
-    return BriCLIBadCommand;
+    cli->LastError = BricliErrorInternal;
+    return BricliBadCommand;
 }
 
 /**
@@ -573,23 +573,23 @@ cleanup:
  * @param cli Pointer to the CLI instance to use.
  * @param rxChar The character received.
  *
- * @return BriCLICopyWouldOverflow if the RX buffer is full, BriCLIOk otherwise.
+ * @return BricliCopyWouldOverflow if the RX buffer is full, BricliOk otherwise.
  */
-BriCLIErrors_t Bricli_ReceiveCharacter(BricliHandle_t *cli, char rxChar)
+BricliErrors_t Bricli_ReceiveCharacter(BricliHandle_t *cli, char rxChar)
 {
-    BriCLIErrors_t result = BriCLIUnknown;
+    BricliErrors_t result = BricliUnknown;
 
     // Check for a null terminating character.
     if (rxChar == '\0')
     {
-        result = BriCLIReceivedNull;
+        result = BricliReceivedNull;
         goto cleanup;
     }
 
     // Check for an overflow.
     if (cli->PendingBytes >= cli->RxBufferSize)
     {
-        result = BriCLICopyWouldOverflow;
+        result = BricliCopyWouldOverflow;
         goto cleanup;
     }
 
@@ -607,7 +607,7 @@ BriCLIErrors_t Bricli_ReceiveCharacter(BricliHandle_t *cli, char rxChar)
     if (rxChar == '\b')
     {
         Bricli_Backspace(cli);
-        result = BriCLIOk;
+        result = BricliOk;
     }
 
     // Echo the received character.
@@ -617,7 +617,7 @@ BriCLIErrors_t Bricli_ReceiveCharacter(BricliHandle_t *cli, char rxChar)
     }
 
     // Success.
-    result = BriCLIOk;
+    result = BricliOk;
 
 cleanup:
     return result;
@@ -631,11 +631,11 @@ cleanup:
  * @param length    The number of bytes to be received from the array.
  * @param arrray    Pointer to the array to be received.
  *
- * @return BriCLICopyWouldOverflow if the RX buffer is full, BriCLIOk otherwise.
+ * @return BricliCopyWouldOverflow if the RX buffer is full, BricliOk otherwise.
  */
-BriCLIErrors_t Bricli_ReceiveIndexedArray(BricliHandle_t *cli, uint32_t index, uint32_t length, char *array)
+BricliErrors_t Bricli_ReceiveIndexedArray(BricliHandle_t *cli, uint32_t index, uint32_t length, char *array)
 {
-    BriCLIErrors_t error = BriCLIUnknown;
+    BricliErrors_t error = BricliUnknown;
 
     // Receive each character in turn.
     for (uint32_t i = index; i < (index + length); i++)
@@ -643,7 +643,7 @@ BriCLIErrors_t Bricli_ReceiveIndexedArray(BricliHandle_t *cli, uint32_t index, u
         error = Bricli_ReceiveCharacter(cli, array[i]);
 
         // If something went wrong, exit immediately.
-        if (error != BriCLIOk)
+        if (error != BricliOk)
         {
             return error;
         }
@@ -760,5 +760,5 @@ int Bricli_PrintF(BricliHandle_t *cli, const char *format, ...)
 void Bricli_Reset(BricliHandle_t *cli)
 {
     Bricli_ClearBuffer(cli);
-    Bricli_ChangeState(cli, BriCLIIdle);
+    Bricli_ChangeState(cli, BricliStateIdle);
 }
