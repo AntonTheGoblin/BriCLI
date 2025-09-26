@@ -12,12 +12,17 @@
             "generator": "Unix Makefiles",
             "hidden": true
         },
+		{
+            "name": "Ninja-Generator",
+            "generator": "Ninja",
+            "hidden": true
+        },
         {
             "name": "x86_64-debug",
             "displayName": "x86_64 Debug",
             "description": "Debug build for x86_64",
             "inherits": [
-                "Unix-Makefiles-Generator"
+                "Ninja-Generator"
             ],
             "binaryDir": "${sourceDir}/debug/x86_64",
             "cacheVariables": {
@@ -30,7 +35,7 @@
             "displayName": "x86_64 Release",
             "description": "Release build for x86_64",
             "inherits": [
-                "Unix-Makefiles-Generator"
+                "Ninja-Generator"
             ],
             "binaryDir": "${sourceDir}/release/x86_64",
             "cacheVariables": {
