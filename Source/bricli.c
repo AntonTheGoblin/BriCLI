@@ -114,7 +114,7 @@ static uint32_t Bricli_ExtractArguments(char *arguments, char *output[])
     #else
         char *token = (char *)strtok(arguments, seperator);
     #endif // BRICLI_USE_REENTRANT
-    while (token != NULL)
+    while (token != NULL && argumentsFound < BRICLI_MAX_ARGUMENTS)
     {
 
         // This is actually a string argument, need to skip to the next quote mark.
