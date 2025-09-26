@@ -18,11 +18,16 @@ set(INC_DIR ${CMAKE_CURRENT_LIST_DIR}/../Include ${CMAKE_CURRENT_LIST_DIR}/../Co
 set(LIB_DIR ${CMAKE_CURRENT_LIST_DIR}/Lib)
 set(TEST_DIR ${CMAKE_CURRENT_LIST_DIR})
 set(MOCK_DIR ${TEST_DIR}/Mocks)
-set(GTEST_DIR ${LIB_DIR}/googletest)
 
 # Add the GoogleTest library
-add_subdirectory(${GTEST_DIR})
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
 
 # ---- Configure Tetsting ----
 enable_testing()
@@ -36,7 +41,7 @@ add_executable(receive-test
     ${TEST_DIR}/TestReceive.cpp
 )
 target_include_directories(receive-test PUBLIC ${INC_DIR} ${LIB_DIR} ${SRC_DIR})
-target_link_libraries(receive-test gtest_main)
+target_link_libraries(receive-test GTest::gtest_main)
 target_compile_options(receive-test PRIVATE ${GCC_COVERAGE_COMPILE_FLAGS})
 target_link_options(receive-test PRIVATE ${GCC_COVERAGE_LINK_FLAGS})
 
@@ -46,7 +51,7 @@ add_executable(send-test
     ${TEST_DIR}/TestSend.cpp
 )
 target_include_directories(send-test PUBLIC ${INC_DIR} ${LIB_DIR} ${SRC_DIR})
-target_link_libraries(send-test gtest_main)
+target_link_libraries(send-test GTest::gtest_main)
 target_compile_options(send-test PRIVATE ${GCC_COVERAGE_COMPILE_FLAGS})
 target_link_options(send-test PRIVATE ${GCC_COVERAGE_LINK_FLAGS})
 
@@ -56,7 +61,7 @@ add_executable(handler-test
     ${TEST_DIR}/TestHandlers.cpp
 )
 target_include_directories(handler-test PUBLIC ${INC_DIR} ${LIB_DIR} ${SRC_DIR})
-target_link_libraries(handler-test gtest_main)
+target_link_libraries(handler-test GTest::gtest_main)
 target_compile_options(handler-test PRIVATE ${GCC_COVERAGE_COMPILE_FLAGS})
 target_link_options(handler-test PRIVATE ${GCC_COVERAGE_LINK_FLAGS})
 
