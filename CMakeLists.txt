@@ -17,10 +17,10 @@ option(${PROJECT_NAME}_BUILD_TESTS "Enable to build unit tests" ON)
 # == Paths ==
 # ===========
 
-set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Source)
-set(INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Include)
-set(CONFIG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Config)
-set(TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Test)
+set(SOURCE_DIR Source)
+set(INC_DIR Include)
+set(CONFIG_DIR Config)
+set(TEST_DIR Test)
 
 # =============
 # == Library ==
