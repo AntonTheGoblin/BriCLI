@@ -13,7 +13,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Pre-Requisites
-      run: apt update -y && apt install -y cmake
+      run: sudo apt update -y && sudo apt install -y cmake
     - name: CMake Configure
       run: cmake --preset x86_64-debug
     - name: CMake Build
