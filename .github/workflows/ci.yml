@@ -21,4 +21,4 @@ jobs:
     - name: CMake Build
       run: cmake --build --preset x86_64-debug
     - name: CMake Test
-      run: ctest --test-dir ./debug/x86-64 --output-on-failure
+      run: ctest --test-dir ./debug/x86_64 --output-on-failure
