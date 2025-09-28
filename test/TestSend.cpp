@@ -30,12 +30,14 @@ namespace Cli {
             // Reset fake functions.
             RESET_FAKE(BspWrite);
             RESET_FAKE(Test_Handler);
+            FFF_RESET_HISTORY();
 
             // Pre-load return values for the fakes.
             BspWrite_fake.return_val = (int)BricliOk;
             Test_Handler_fake.return_val = (int)BricliOk;
 
             // Configure our default BriCLI settings.
+            memset(&_cli, 0, sizeof(BricliHandle_t));
             _cli.Eol = (char *)"\n";
             _cli.CommandList = _commandList;
             _cli.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
@@ -118,6 +120,12 @@ namespace Cli {
 
         // Make sure total calls match.
         EXPECT_EQ(BspWrite_fake.call_count, 12);
+
+        for (size_t i = 0; i < BspWrite_fake.call_count; i++)
+        {
+            std::cout << "[" << i << "]: " << BspWrite_fake.arg1_history[i] << "\n";
+        }
+        
     }
 
     TEST_F(SendTest, Prompt)
