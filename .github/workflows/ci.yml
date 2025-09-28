@@ -1,0 +1,24 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ $default-branch ]
+  pull_request:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Pre-Requisites
+      run: sudo apt update -y && sudo apt install -y cmake
+    - name: debug ls
+      run: ls
+    - name: CMake Configure
+      run: cmake --preset x86_64-debug
+    - name: CMake Build
+      run: cmake --build --preset x86_64-debug
+    - name: CMake Test
+      run: ctest --test-dir ./debug/x86_64 --output-on-failure
