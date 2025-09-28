@@ -14,6 +14,8 @@ jobs:
     - uses: actions/checkout@v4
     - name: Pre-Requisites
       run: sudo apt update -y && sudo apt install -y cmake
+    - name: debug ls
+      run: ls
     - name: CMake Configure
       run: cmake --preset x86_64-debug
     - name: CMake Build
