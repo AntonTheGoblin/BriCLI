@@ -187,6 +187,32 @@ static inline void Bricli_ChangeState(BricliHandle_t* cli, BricliStates_t newSta
     }
 }
 
+/**
+ * @brief Validates whether the given command is available under the current auth scopes 
+ * 
+ * @param cli Pointer to the BriCLI instance to use
+ * @param command Pointer to a command to verify
+ * @return bool True if the command is within auth scope, false otherwise
+ */
+static bool Bricli_IsCommandInScope(BricliHandle_t* cli, BricliCommand_t *command)
+{	
+	if (command->AuthScopesRequired == BricliScopeAll)
+	{
+		// Command is available to all scopes
+		return true;
+	}
+	else if ((cli->AuthScopes & command->AuthScopesRequired) != 0)
+	{
+		// Command is available under granted scopes
+		return true;
+	}
+	else
+	{
+		// Command is not available
+		return false;
+	}
+}
+
 // ===========================
 // ===== System Commands =====
 // ===========================
@@ -241,16 +267,17 @@ static int Bricli_SystemHandlerHelp(BricliHandle_t *cli, uint32_t numberOfArgs, 
 	(void)args;
 
 	// Print the system commands first.
+	Bricli_WriteStringLine(cli, "Built-in Commands");
 	const BricliSystemCommand_t *systemCommand = &_systemCommands[0];
 	while(systemCommand->Name != NULL)
 	{
 		if (cli->SendEol == NULL)
 		{
-			Bricli_PrintF(cli, "%s - %s%s", systemCommand->Name, systemCommand->HelpMessage, cli->Eol);
+			Bricli_PrintF(cli, "\t%s - %s%s", systemCommand->Name, systemCommand->HelpMessage, cli->Eol);
 		}
 		else
 		{
-			Bricli_PrintF(cli, "%s - %s%s", systemCommand->Name, systemCommand->HelpMessage, cli->SendEol);
+			Bricli_PrintF(cli, "\t%s - %s%s", systemCommand->Name, systemCommand->HelpMessage, cli->SendEol);
 		}
 
 		// Increment the pointer
@@ -258,34 +285,39 @@ static int Bricli_SystemHandlerHelp(BricliHandle_t *cli, uint32_t numberOfArgs, 
 	}
 	
 	// Print all registered user commands.
+	Bricli_WriteStringLine(cli, "CLI Commands");
 	BricliCommand_t *command = NULL;
 	for (uint8_t i = 0; i < cli->CommandListLength; i++)
     {
         command = &cli->CommandList[i];
 
-        // Send the help message for each command.
-        if (command->HelpMessage == NULL)
-        {
-            if (cli->SendEol == NULL)
-            {
-                Bricli_PrintF(cli, "%s%s", command->Name, cli->Eol);
-            }
-            else
-            {
-                Bricli_PrintF(cli, "%s%s", command->Name, cli->SendEol);
-            }
-        }
-        else
-        {
-            if (cli->SendEol == NULL)
-            {
-                Bricli_PrintF(cli, "%s - %s%s", command->Name, command->HelpMessage, cli->Eol);
-            }
-            else
-            {
-                Bricli_PrintF(cli, "%s - %s%s", command->Name, command->HelpMessage, cli->SendEol);
-            }
-        }
+		// Only display help if the command is available to the current auth scope
+		if (Bricli_IsCommandInScope(cli, command))
+		{
+			// Send the help message for each command.
+			if (command->HelpMessage == NULL)
+			{
+				if (cli->SendEol == NULL)
+				{
+					Bricli_PrintF(cli, "\t%s%s", command->Name, cli->Eol);
+				}
+				else
+				{
+					Bricli_PrintF(cli, "\t%s%s", command->Name, cli->SendEol);
+				}
+			}
+			else
+			{
+				if (cli->SendEol == NULL)
+				{
+					Bricli_PrintF(cli, "\t%s - %s%s", command->Name, command->HelpMessage, cli->Eol);
+				}
+				else
+				{
+					Bricli_PrintF(cli, "\t%s - %s%s", command->Name, command->HelpMessage, cli->SendEol);
+				}
+			}
+		}
     }
 
 	return BricliOk;
@@ -319,17 +351,70 @@ static int Bricli_SystemHandlerClear(BricliHandle_t *cli, uint32_t numberOfArgs,
  */
 static int Bricli_SystemHandlerLogin(BricliHandle_t *cli, uint32_t numberOfArgs, char *args[])
 {
-	int result = 0;
+	int result = -1;
 
-	if (numberOfArgs < 1)
+	if (numberOfArgs < 2)
 	{
-		Bricli_WriteStringColouredLine(cli, "ERROR: login requires 1 argument!", BricliTextRed);
-		
-		result = -1;
+		Bricli_WriteStringColouredLine(cli, "ERROR: login requires 2 arguments!", BricliTextRed);
 		goto cleanup;
 	}
 
+	if (NULL == cli->AuthList)
+	{
+		Bricli_WriteStringColouredLine(cli, "ERROR: No authentication provider registered", BricliTextRed);
+		goto cleanup;
+	}
+
+	// Helper pointers for our arguments
+	const char *user = args[0];
+	const char *pass = args[1];
+
+	// Search the auth provider for a matching user
+	const BricliAuthEntry_t *authEntry = &cli->AuthList[0];
+	while (NULL != authEntry->Username)
+	{
+		// Search for a matching username
+		if (strcmp(user, authEntry->Username) == 0)
+		{
+			// Search for a matching password
+			if (strcmp(pass, authEntry->Password) == 0)
+			{
+				// Update our active scopes
+				cli->AuthScopes = authEntry->Scopes;
+
+				// Success
+				result = 0;
+				if (cli->SendEol == NULL)
+				{
+					Bricli_PrintF(cli, "Logged in as %s%s", authEntry->Username, cli->Eol);
+				}
+				else
+				{
+					Bricli_PrintF(cli, "Logged in as %s%s", authEntry->Username, cli->SendEol);
+				}
+
+				goto cleanup;
+			}
+			else
+			{
+				// Password mismatch
+				result = -2;
+				goto cleanup;
+			}
+		}
+		
+		// Increment the pointer
+		authEntry++;
+	}
+
+	// If we get here then we didn't find a matching user
+	result = -2;
+
 cleanup:
+	// If we have an error report back
+	if (result == -2)
+		Bricli_WriteStringColouredLine(cli, "ERROR: Invalid username or password", BricliTextRed);
+
 	return result;
 }
 
@@ -345,10 +430,17 @@ static int Bricli_SystemHandlerLogout(BricliHandle_t *cli, uint32_t numberOfArgs
 {
 	int result = 0;
 
-	// Reset auth scopes
-	cli->AuthScopes = BricliScopeAll;
-
-	Bricli_WriteString(cli, "Logged out of session\n");
+	if (cli->AuthScopes != BricliScopeAll)
+	{
+		// Reset auth scopes
+		cli->AuthScopes = BricliScopeAll;
+		Bricli_WriteString(cli, "Logged out of session\n");
+	}
+	else
+	{
+		// Not logged in, so can't log out
+		Bricli_WriteString(cli, "No active login session found\n");
+	}
 
 	return result;
 }
@@ -396,8 +488,6 @@ BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* settings)
 	// Initialise the CLI to zero
 	memset(cli, 0, sizeof(BricliHandle_t));
 
-	/* Apply default settings */
-
 	// EOL string
 	if (NULL != settings->Eol)
 		cli->Eol = settings->Eol;
@@ -426,6 +516,10 @@ BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* settings)
 
 	// Flag settings
 	cli->LocalEcho = settings->LocalEcho;
+
+	// Auth list
+	if (NULL != settings->AuthList)
+		cli->AuthList = settings->AuthList;
 
 	// Success
 	result = BricliOk;
@@ -676,28 +770,49 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
         // Check if we have found a match.
         if (strcmp(command, cliCommand->Name) == 0)
         {
-            // Call the command's handler function.
-            Bricli_ChangeState(cli, BricliStateHandlerRunning);
-            int result = cliCommand->Handler(numberOfArguments, ArgumentsFound);
-            Bricli_ChangeState(cli, BricliStateFinished);
+			int result = BricliUnknown;
 
-            // Check the result code.
-            if (result < 0)
-            {
-                // If enabled, display the error code to the user.
-#if BRICLI_SHOW_COMMAND_ERRORS
-                if (cli->SendEol == NULL)
-                {
-                    BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->Eol);
-                }
-                else
-                {
-                    BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->SendEol);
-                }
-#endif // BRICLI_SHOW_COMMAND_ERRORS
+			// Check our authentication scopes
+			if (Bricli_IsCommandInScope(cli, cliCommand))
+			{
+				// Call the command's handler function.
+				Bricli_ChangeState(cli, BricliStateHandlerRunning);
+				result = cliCommand->Handler(numberOfArguments, ArgumentsFound);
+				Bricli_ChangeState(cli, BricliStateFinished);
+	
+				// Check the result code.
+				if (result < 0)
+				{
+					// If enabled, display the error code to the user.
+				#if BRICLI_SHOW_COMMAND_ERRORS
+					if (cli->SendEol == NULL)
+					{
+						BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->Eol);
+					}
+					else
+					{
+						BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->SendEol);
+					}
+				#endif // BRICLI_SHOW_COMMAND_ERRORS
+	
+					cli->LastError = BricliErrorCommand;
+				}
+			}
+			else
+			{
+				cli->LastError = BricliErrorInternal;
+				result = BricliUnauthorized;
 
-                cli->LastError = BricliErrorCommand;
-            }
+				if (cli->SendEol == NULL)
+				{
+					Bricli_PrintF(cli, "Unknown Command %s%s", command, cli->Eol);
+				}
+				else
+				{
+					Bricli_PrintF(cli, "Unknown Command %s%s", command, cli->SendEol);
+				}
+			}
+			
             return result;
         }
     }

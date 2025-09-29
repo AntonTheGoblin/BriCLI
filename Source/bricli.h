@@ -97,14 +97,12 @@ extern "C" {
 // #define BRICLI_USE_INTENSE_BOLD     1 // Enables the use of high intensity bold text options.
 #endif // BRICLI_USE_INTENSE_BOLD
 
-// The default EoL string to be used when none is provided to init
 #ifndef BRICLI_DEFAULT_EOL
-#define BRICLI_DEFAULT_EOL				"\n"
+#define BRICLI_DEFAULT_EOL				"\n" // The default EoL string to be used when none is provided to init
 #endif // BRICLI_DEFAULT_EOL
 
-// The default prompt string to be used when non is provided to init
 #ifndef BRICLI_DEFAULT_PROMPT
-#define BRICLI_DEFAULT_PROMPT			">> "
+#define BRICLI_DEFAULT_PROMPT			">> " // The default prompt string to be used when non is provided to init
 #endif // BRICLI_DEFAULT_PROMPT
 
 #endif // BRICLI_USE_COLOUR
@@ -203,8 +201,9 @@ typedef enum _BricliLastError_t
 
 typedef enum _BricliErrors_t
 {
-    BricliUnknown            = -7,
-    BricliReceivedNull       = -6,
+    BricliUnknown            = -8,
+    BricliUnauthorized		 = -7,
+	BricliReceivedNull       = -6,
     BricliCopyWouldOverflow  = -5,
     BricliBadCommand         = -4,
     BricliBadParameter       = -3,
@@ -276,20 +275,6 @@ typedef enum _BricliStates_t
 } BricliStates_t;
 
 /**
- * @brief CLI Authentication levels
- */
-typedef uint32_t BricliAuthLevel_t;
-
-// No authentication required
-#define BricliAuthNone                  (0)
-
-// User level authentication
-#define BricliAuthUser                  (1)
-
-// Admin level authentication
-#define BricliAuthAdmin                 (2)
-
-/**
  * @brief CLI Authorization scopes, represented as up to 32 bit flags
  */
 typedef uint32_t BricliAuthScopes_t;
@@ -300,17 +285,15 @@ typedef uint32_t BricliAuthScopes_t;
 // User scope
 #define BricliScopeUser                 (1 << 1)
 
-// Admin scope, includes user level privileges 
-#define BricliScopeAdmin                ((1 << 2) | BricliScopeUser)
+// Admin scope
+#define BricliScopeAdmin                (1 << 2)
 
-/**
- * @brief Return type for authentication requests
- */
-typedef struct _BricliAuthResult_t
+typedef struct _BricliAuthEntry_t
 {
-    _BricliAuthErrors_t Result;     // The result code, BricliOk if auth was achieved otherwise an error
-    BricliAuthLevel_t AuthLevel;    // The Auth level being modified
-} BricliAuthResult_t;
+	const char *Username;
+	const char *Password;
+	BricliAuthScopes_t Scopes;
+} BricliAuthEntry_t;
 
 /**
  * @brief BSP function for writing data.
@@ -351,7 +334,7 @@ typedef struct _BricliCommand_t
     const char*             Name;                   /*<< Command name. */
     Bricli_CommandHandler   Handler;                /*<< Handler function for this command. */
     const char*             HelpMessage;            /*<< Optional message to be displayed by the help command. */
-    BricliAuthLevel_t       AuthScopesRequired;     /*<< The authorisation scopes required to access this command. */
+    BricliAuthScopes_t      AuthScopesRequired;     /*<< The authorisation scopes required to access this command. */
 } BricliCommand_t;
 
 /**
@@ -359,7 +342,8 @@ typedef struct _BricliCommand_t
  */
 typedef struct BricliInit_t
 {
-    char *Eol;
+	const BricliAuthEntry_t *AuthList;
+	char *Eol;
     char *SendEol;
     char *Prompt;
     Bricli_BspWrite BspWrite;
@@ -381,7 +365,8 @@ typedef struct BricliInit_t
  */
 typedef struct _BricliHandle_t
 {
-    BricliAuthScopes_t      AuthScopes;
+	const BricliAuthEntry_t *AuthList;
+	BricliAuthScopes_t      AuthScopes;
     Bricli_BspWrite        	BspWrite;
     BricliCommand_t*       	CommandList;
     uint32_t                CommandListLength;
