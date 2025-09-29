@@ -10,6 +10,20 @@ DEFINE_FFF_GLOBALS;
 FAKE_VALUE_FUNC(int, BspWrite, uint32_t, const char*);
 FAKE_VALUE_FUNC(int, Test_Handler, uint32_t, char **);
 
+static char _stringHistory[50][80] = {0};
+static uint8_t _stringHistoryCount = 0;
+
+int CustomBspWriteFake(uint32_t length, const char* data)
+{
+	printf("%s", data);
+
+	memset(&_stringHistory[_stringHistoryCount][0], 0, 80);
+	memcpy(&_stringHistory[_stringHistoryCount][0], data, length);
+	_stringHistoryCount++;
+
+	return BspWrite_fake.return_val;
+}
+
 namespace Cli {
 
     class SendTest: public ::testing::Test
@@ -17,7 +31,7 @@ namespace Cli {
     protected:
         BricliCommand_t _commandList[1] =
         {
-            {"test", Test_Handler, "Tests."}
+            { "test", Test_Handler, "Tests.", BricliScopeAll }
         };
         BricliHandle_t _cli;
         char _buffer[100] = {0};
@@ -32,9 +46,14 @@ namespace Cli {
             RESET_FAKE(Test_Handler);
             FFF_RESET_HISTORY();
 
+			// Reset string history
+			memset(&_stringHistory[0][0], 0, (50 * 80));
+			_stringHistoryCount = 0;
+
             // Pre-load return values for the fakes.
             BspWrite_fake.return_val = (int)BricliOk;
-            Test_Handler_fake.return_val = (int)BricliOk;
+			BspWrite_fake.custom_fake = CustomBspWriteFake;
+			Test_Handler_fake.return_val = (int)BricliOk;
 
             // Configure our default BriCLI settings.
             BricliInit_t init = {0};
@@ -139,15 +158,16 @@ namespace Cli {
 
     TEST_F(SendTest, Help)
     {
-        uint32_t NumberOfCommands = (4 + _cli.CommandListLength); // 4 system commands with automatic Eols plus however many custom commands.
+        uint32_t NumberOfCommands = (4 + _cli.CommandListLength); // 4 system command calls with automatic Eols plus however many custom commands.
 
         // Print the help message and make sure BspWrite is called.
-        Bricli_PrintHelp(&_cli);
-        EXPECT_EQ(BspWrite_fake.call_count, NumberOfCommands);
+        EXPECT_EQ(0, Bricli_PrintHelp(&_cli));
+        EXPECT_EQ(_stringHistoryCount, NumberOfCommands);
 
         // Make sure our system commands are called.
-        EXPECT_STREQ(BspWrite_fake.arg1_history[0], "help - Displays this help message");
-        EXPECT_STREQ(BspWrite_fake.arg1_history[2], "clear - Clears the terminal");
+        EXPECT_STREQ(&_stringHistory[0][0], "help - Displays this help message\n");
+        EXPECT_STREQ(&_stringHistory[1][0], "clear - Clears the terminal\n");
+        EXPECT_STREQ(&_stringHistory[2][0], "login - Login to the terminal\n");
     }
 
     TEST_F(SendTest, SendEol)

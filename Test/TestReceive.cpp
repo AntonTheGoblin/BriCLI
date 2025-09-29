@@ -17,7 +17,7 @@ namespace Cli {
     protected:
         BricliCommand_t _commandList[1] =
         {
-            {"test", Test_Handler, "Tests."}
+            {"test", Test_Handler, "Tests", BricliScopeAll}
         };
         BricliHandle_t _cli;
         char _buffer[100] = {0};
