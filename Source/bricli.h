@@ -381,26 +381,22 @@ typedef struct BricliInit_t
  */
 typedef struct _BricliHandle_t
 {
-    BricliLastError_t      LastError;
-    BricliCommand_t*       CommandList;
+    BricliAuthScopes_t      AuthScopes;
+    Bricli_BspWrite        	BspWrite;
+    BricliCommand_t*       	CommandList;
     uint32_t                CommandListLength;
-    Bricli_BspWrite        BspWrite;
     char*                   Eol;
-    char*                   RxBuffer;
-    uint32_t                RxBufferSize;
+    bool                    IsHandlingEscape;
+    BricliLastError_t      	LastError;
+    bool                    LocalEcho;
     uint32_t                PendingBytes;
     char*                   Prompt;
-    bool                    IsHandlingEscape;
-    BricliStates_t         State;
-    Bricli_StateChanged    OnStateChanged;
-    bool                    LocalEcho;
+    char*                   RxBuffer;
+    uint32_t                RxBufferSize;
     char *                  SendEol;
+    BricliStates_t         	State;
+    Bricli_StateChanged    	OnStateChanged;
 } BricliHandle_t;
-
-/**
- * @brief Default settings for BriCLI for quick initialisation.
- */
-#define BRICLI_HANDLE_DEFAULT { BricliErrorNone, NULL, 0, NULL, (char*)"\n", NULL, 0, 0, (char*)">> ", false, BricliStateIdle, NULL, false, NULL }
 
 // ==============================
 // ===== Exported Functions =====
