@@ -267,17 +267,16 @@ static int Bricli_SystemHandlerHelp(BricliHandle_t *cli, uint32_t numberOfArgs, 
 	(void)args;
 
 	// Print the system commands first.
-	Bricli_WriteStringLine(cli, "Built-in Commands");
 	const BricliSystemCommand_t *systemCommand = &_systemCommands[0];
 	while(systemCommand->Name != NULL)
 	{
 		if (cli->SendEol == NULL)
 		{
-			Bricli_PrintF(cli, "\t%s - %s%s", systemCommand->Name, systemCommand->HelpMessage, cli->Eol);
+			Bricli_PrintF(cli, "%s - %s%s", systemCommand->Name, systemCommand->HelpMessage, cli->Eol);
 		}
 		else
 		{
-			Bricli_PrintF(cli, "\t%s - %s%s", systemCommand->Name, systemCommand->HelpMessage, cli->SendEol);
+			Bricli_PrintF(cli, "%s - %s%s", systemCommand->Name, systemCommand->HelpMessage, cli->SendEol);
 		}
 
 		// Increment the pointer
@@ -285,7 +284,6 @@ static int Bricli_SystemHandlerHelp(BricliHandle_t *cli, uint32_t numberOfArgs, 
 	}
 	
 	// Print all registered user commands.
-	Bricli_WriteStringLine(cli, "CLI Commands");
 	BricliCommand_t *command = NULL;
 	for (uint8_t i = 0; i < cli->CommandListLength; i++)
     {
@@ -299,22 +297,22 @@ static int Bricli_SystemHandlerHelp(BricliHandle_t *cli, uint32_t numberOfArgs, 
 			{
 				if (cli->SendEol == NULL)
 				{
-					Bricli_PrintF(cli, "\t%s%s", command->Name, cli->Eol);
+					Bricli_PrintF(cli, "%s%s", command->Name, cli->Eol);
 				}
 				else
 				{
-					Bricli_PrintF(cli, "\t%s%s", command->Name, cli->SendEol);
+					Bricli_PrintF(cli, "%s%s", command->Name, cli->SendEol);
 				}
 			}
 			else
 			{
 				if (cli->SendEol == NULL)
 				{
-					Bricli_PrintF(cli, "\t%s - %s%s", command->Name, command->HelpMessage, cli->Eol);
+					Bricli_PrintF(cli, "%s - %s%s", command->Name, command->HelpMessage, cli->Eol);
 				}
 				else
 				{
-					Bricli_PrintF(cli, "\t%s - %s%s", command->Name, command->HelpMessage, cli->SendEol);
+					Bricli_PrintF(cli, "%s - %s%s", command->Name, command->HelpMessage, cli->SendEol);
 				}
 			}
 		}
