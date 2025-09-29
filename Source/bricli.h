@@ -24,7 +24,9 @@
 extern "C" {
 #endif
 
-/* DEFINES */
+// ===================
+// ===== Defines =====
+// ===================
 
 // Helper macro for calculating the size of statically typed array. This does NOT work on array parameters in C.
 #define BRICLI_STATIC_ARRAY_SIZE(array) ( sizeof(array) / sizeof(array[0]) )
@@ -178,7 +180,9 @@ extern "C" {
 // #define BHCYN "\e[1;96m"
 // #define BHWHT "\e[1;97m"
 
-/* TYPE DEFINITIONS */
+// =================
+// ===== Types =====
+// =================
 
 typedef enum _BricliLastError_t
 {
@@ -327,7 +331,9 @@ typedef struct _BricliHandle_t
  */
 #define BRICLI_HANDLE_DEFAULT { BricliErrorNone, NULL, 0, NULL, (char*)"\n", NULL, 0, 0, (char*)">> ", false, BricliStateIdle, NULL, false, NULL }
 
-/* FUNCTION DECLARATIONS */
+// ==============================
+// ===== Exported Functions =====
+// ==============================
 
 int Bricli_ParseCommand(BricliHandle_t* cli);
 int Bricli_Parse(BricliHandle_t* cli);

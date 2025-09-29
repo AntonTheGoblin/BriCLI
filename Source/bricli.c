@@ -9,17 +9,23 @@
  *
  **/
 
-/* INCLUDES */
+// ====================
+// ===== Includes =====
+// ====================
+
 // Fix for "strtok_r" not found on default C99 GNU builds.
 #ifdef __GNUC__
     #define _GNU_SOURCE
 #endif // __GNUC__
+
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 #include "bricli.h"
 
-/* CONSTANTS */
+// =====================
+// ===== Constants =====
+// =====================
 
 #if BRICLI_USE_COLOUR
 static const char *_colourReset = "\e[0m";
@@ -81,7 +87,9 @@ static const char *_backgroundTable[] =
 #endif // BRICLI_USE_BACKGROUNDS
 #endif // BRICLI_USE_COLOUR
 
-/* LOCAL FUNCTIONS */
+// ===========================
+// ===== Local Functions =====
+// ===========================
 
 /**
  * @brief Extracts arguments from a given argument string. Arguments must be separated by spaces.
@@ -179,7 +187,9 @@ static inline void Bricli_ChangeState(BricliHandle_t* cli, BricliStates_t newSta
     }
 }
 
-/* FUNCTION DEFINITIONS */
+// ==============================
+// ===== Exported Functions =====
+// ==============================
 
 #if BRICLI_USE_COLOUR
 /**
