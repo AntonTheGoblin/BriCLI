@@ -1,8 +1,6 @@
 /**
  * @file    bricli.h
  * @brief   Header for the BriCLI library.
- * @date    28/06/2021
- * @version 1
  * @author  Anthony Wall
  *
  * Copyright (C) 2025 Anthony Wall.

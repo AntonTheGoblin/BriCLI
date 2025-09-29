@@ -2,8 +2,6 @@
  * @file    bricli.c
  * @brief   BriCLI source, provides a lightweight CLI implementation.
  *          Supports VT100 ANSI escape codes.
- * @date    28/06/2021
- * @version 1
  * @author  Anthony Wall
  *
  * Copyright (C) 2025 Anthony Wall.
