@@ -22,6 +22,22 @@ static int Ping_Handler(uint32_t numberOfArgs, char *args[])
 }
 
 /**
+ * @brief Admin command handler.
+ * 
+ * @param numberOfArgs The number of arguments received
+ * @param args The string array of arguments.
+ * @return A BriCLI Error code, 0 for success.
+ */
+static int Admin_Handler(uint32_t numberOfArgs, char *args[])
+{
+	(void)numberOfArgs;
+	(void)args;
+
+	return Bricli_WriteString(&_cli, "Hello admin user!\n");
+}
+
+
+/**
  * @brief Exit command handler, quits the application!
  * 
  * @param numberOfArgs The number of arguments received
@@ -36,8 +52,14 @@ static int Exit_Handler(uint32_t numberOfArgs, char *args[])
 
 static BricliCommand_t _commandList[] =
 {
-    { "admin", Ping_Handler, BricliAuthAdmin },
-    { "exit", Exit_Handler, "Exits the application" }
+    { "ping", Ping_Handler, "Pong!", BricliScopeAll },
+    { "admin", Admin_Handler, "Admins only!", BricliScopeAdmin },
+    { "exit", Exit_Handler, "Exits the application", BricliScopeAll }
+};
+
+static BricliAuthEntry_t _authList[] =
+{
+	{"admin", "Pass123", (BricliScopeAdmin | BricliScopeUser)}
 };
 
 static int CustomWrite(uint32_t length, const char* data)
@@ -49,7 +71,8 @@ int main(int argc, char const *argv[])
 {
 	// Setup the CLI
 	BricliInit_t init = {0};
-    init.BspWrite = CustomWrite;
+	init.AuthList = _authList;
+	init.BspWrite = CustomWrite;
     init.RxBuffer = _rxBuffer;
     init.RxBufferSize = RX_BUFFER_SIZE;
     init.CommandList = _commandList;
