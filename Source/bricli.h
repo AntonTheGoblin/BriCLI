@@ -97,6 +97,16 @@ extern "C" {
 // #define BRICLI_USE_INTENSE_BOLD     1 // Enables the use of high intensity bold text options.
 #endif // BRICLI_USE_INTENSE_BOLD
 
+// The default EoL string to be used when none is provided to init
+#ifndef BRICLI_DEFAULT_EOL
+#define BRICLI_DEFAULT_EOL				"\n"
+#endif // BRICLI_DEFAULT_EOL
+
+// The default prompt string to be used when non is provided to init
+#ifndef BRICLI_DEFAULT_PROMPT
+#define BRICLI_DEFAULT_PROMPT			">> "
+#endif // BRICLI_DEFAULT_PROMPT
+
 #endif // BRICLI_USE_COLOUR
 
 #define BRICLI_DELETE_CHAR     "\e[K"
@@ -335,18 +345,19 @@ typedef struct _BricliHandle_t
 // ===== Exported Functions =====
 // ==============================
 
-int Bricli_ParseCommand(BricliHandle_t* cli);
-int Bricli_Parse(BricliHandle_t* cli);
-BricliErrors_t Bricli_ReceiveCharacter(BricliHandle_t* cli, char rxChar);
-BricliErrors_t Bricli_ReceiveIndexedArray(BricliHandle_t *cli, uint32_t index, uint32_t length, char *array);
-bool Bricli_CheckForEol(BricliHandle_t* cli, bool replaceEol);
-void Bricli_Backspace(BricliHandle_t* cli);
-size_t Bricli_SplitOnEol(BricliHandle_t *cli);
-int Bricli_PrintHelp(BricliHandle_t* cli);
-int Bricli_PrintF(BricliHandle_t* cli, const char* format, ...);
-void Bricli_SetColour(BricliHandle_t* cli, BricliColours_t colourId);
-void Bricli_Reset(BricliHandle_t *cli);
-void Bricli_ClearCommand(BricliHandle_t *cli);
+extern BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t *settings);
+extern int Bricli_ParseCommand(BricliHandle_t* cli);
+extern int Bricli_Parse(BricliHandle_t* cli);
+extern BricliErrors_t Bricli_ReceiveCharacter(BricliHandle_t* cli, char rxChar);
+extern BricliErrors_t Bricli_ReceiveIndexedArray(BricliHandle_t *cli, uint32_t index, uint32_t length, char *array);
+extern bool Bricli_CheckForEol(BricliHandle_t* cli, bool replaceEol);
+extern void Bricli_Backspace(BricliHandle_t* cli);
+extern size_t Bricli_SplitOnEol(BricliHandle_t *cli);
+extern int Bricli_PrintHelp(BricliHandle_t* cli);
+extern int Bricli_PrintF(BricliHandle_t* cli, const char* format, ...);
+extern void Bricli_SetColour(BricliHandle_t* cli, BricliColours_t colourId);
+extern void Bricli_Reset(BricliHandle_t *cli);
+extern void Bricli_ClearCommand(BricliHandle_t *cli);
 
 /**
  * @brief Helper macro for calling Bricli_PrintF with colour support.

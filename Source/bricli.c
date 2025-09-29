@@ -191,6 +191,69 @@ static inline void Bricli_ChangeState(BricliHandle_t* cli, BricliStates_t newSta
 // ===== Exported Functions =====
 // ==============================
 
+BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* settings)
+{
+	BricliErrors_t result = BricliUnknown;
+
+	// Validate pointers
+	if (NULL == cli || NULL == settings)
+	{
+		BRICLI_LOG("BriCLI: NULL pointer in %s\n", __func__);
+		result = BricliBadParameter;
+		goto cleanup;
+	}
+
+	// Validate buffer settings
+	if (NULL == settings->RxBuffer || 0 == settings->RxBufferSize)
+	{
+		BRICLI_LOG("BriCLI: Invalid RX buffer in %s\n", __func__);
+		result = BricliBadParameter;
+		goto cleanup;
+	}
+
+	// Validate command list settings
+	if (NULL == settings->CommandList || 0 == settings->CommandListLength)
+	{
+		BRICLI_LOG("BriCLI: Invalid Command List in %s\n", __func__);
+		result = BricliBadParameter;
+		goto cleanup;
+	}
+
+	// Validate BSP Write function
+	if (NULL == settings->BspWrite)
+	{
+		BRICLI_LOG("BriCLI: Invalid BspWrite in %s\n", __func__);
+		result = BricliBadParameter;
+		goto cleanup;
+	}
+	
+	// Initialise the CLI to zero
+	memset(cli, 0, sizeof(BricliHandle_t));
+
+	/* Apply default settings */
+
+	// EOL string
+	if (NULL != settings->Eol)
+		cli->Eol = settings->Eol;
+	else
+		cli->Eol = BRICLI_DEFAULT_EOL;
+	
+	// Prompt string
+	if (NULL != settings->Prompt)
+		cli->Prompt = settings->Prompt;
+	else
+		cli->Prompt = BRICLI_DEFAULT_PROMPT;
+
+	// Local echo
+	cli->LocalEcho = settings->LocalEcho;
+
+	// Success
+	result = BricliOk;
+
+cleanup:
+	return result;
+}
+
 #if BRICLI_USE_COLOUR
 /**
  * @brief Sets the various colour options of a VT100 terminal.

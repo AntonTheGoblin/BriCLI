@@ -37,14 +37,14 @@ namespace Cli {
             Test_Handler_fake.return_val = (int)BricliOk;
 
             // Configure our default BriCLI settings.
-            memset(&_cli, 0, sizeof(BricliHandle_t));
-            _cli.Eol = (char *)"\n";
-            _cli.CommandList = _commandList;
-            _cli.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
-            _cli.RxBuffer = _buffer;
-            _cli.RxBufferSize = 100;
-            _cli.BspWrite = BspWrite;
-            _cli.Prompt = (char *)">> ";
+            BricliInit_t init = {0};
+            init.CommandList = _commandList;
+            init.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
+            init.RxBuffer = _buffer;
+            init.RxBufferSize = 100;
+            init.BspWrite = BspWrite;
+
+			Bricli_Init(&_cli, &init);
         }
 
         virtual void TearDown() 

@@ -35,10 +35,10 @@ namespace Cli {
     protected:
         BricliCommand_t _commandList[2] =
         {
-            {"test", Test_Handler, "Tests."},
-            {"args", Argument_Handler, "Test Arguments"}
+            {"test", Test_Handler, "Tests.", BricliScopeAll},
+            {"args", Argument_Handler, "Test Arguments", BricliScopeAll}
         };
-        BricliHandle_t _cli = BRICLI_HANDLE_DEFAULT;
+        BricliHandle_t _cli;
         char _buffer[100] = {0};
 
         HandlerTest() { }
@@ -58,19 +58,35 @@ namespace Cli {
             Argument_Handler_fake.return_val = (int)BricliOk;
 
             // Configure our default BriCLI settings.
-            _cli.CommandList = _commandList;
-            _cli.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
-            _cli.RxBuffer = _buffer;
-            _cli.RxBufferSize = 100;
-            _cli.BspWrite = BspWrite;
-            _cli.OnStateChanged = Test_StateChanged;
-        }
+			BricliInit_t init = {0};
+			init.CommandList = _commandList;
+            init.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
+            init.RxBuffer = _buffer;
+            init.RxBufferSize = 100;
+            init.BspWrite = BspWrite;
+            init.OnStateChanged = Test_StateChanged;
+
+			Bricli_Init(&_cli, &init);
+		}
 
         virtual void TearDown() 
         {
             Bricli_ClearBuffer(&_cli);
         }
     };
+
+	TEST_F(HandlerTest, InitErrors)
+	{
+		BricliHandle_t initCli;
+		BricliInit_t initSettings = {0};
+
+		// NULL pointers
+		EXPECT_EQ(BricliBadParameter, Bricli_Init(NULL, &initSettings));
+		EXPECT_EQ(BricliBadParameter, Bricli_Init(&initCli, NULL));
+
+		// Bad RX Buffer
+		initSettings.
+	}
 
     TEST_F(HandlerTest, ReceiveHandler)
     {

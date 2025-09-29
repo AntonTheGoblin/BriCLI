@@ -27,7 +27,7 @@ namespace Cli {
             {"admin", Admin_Handler, "admin level command", (BricliAuthAdmin | BricliAuthUser) },
             {"admin", Admin_Handler, "admin level command", CUSTOM_AUTH_LEVEL }
         };
-        BricliHandle_t _cli = BRICLI_HANDLE_DEFAULT;
+        BricliHandle_t _cli;
         char _buffer[100] = {0};
 
         AuthTest() { }
@@ -35,22 +35,24 @@ namespace Cli {
 
         virtual void SetUp()
         {
-            // Reset fake functions.
+			// Reset fake functions.
             RESET_FAKE(BspWrite);
             RESET_FAKE(User_Handler);
-
+			
             // Pre-load return values for the fakes.
             BspWrite_fake.return_val = (int)BricliOk;
             User_Handler_fake.return_val = (int)BricliOk;
-
+			
             // Configure our default BriCLI settings.
-            _cli.CommandList = _commandList;
-            _cli.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
-            _cli.RxBuffer = _buffer;
-            _cli.RxBufferSize = 100;
-            _cli.BspWrite = BspWrite;
-            _cli.LocalEcho = true;
-			_cli.AuthLevel = BricliAuthNone;
+			BricliInit_t init = {0};
+            init.CommandList = _commandList;
+            init.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
+            init.RxBuffer = _buffer;
+            init.RxBufferSize = 100;
+            init.BspWrite = BspWrite;
+            init.LocalEcho = true;
+
+			Bricli_Init(&_cli, &init);
 		}
 
         virtual void TearDown() 

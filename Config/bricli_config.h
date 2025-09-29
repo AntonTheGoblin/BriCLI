@@ -31,6 +31,16 @@
 #define BRICLI_USE_REENTRANT 0
 
 // ============================
+// ===== Default Settings =====
+// ============================
+
+// The default EoL string to be used when none is provided to init
+#define BRICLI_DEFAULT_EOL				"\n"
+
+// The default prompt string to be used when non is provided to init
+#define BRICLI_DEFAULT_PROMPT			">> "
+
+// ============================
 // ===== Display Settings =====
 // ============================
 
@@ -39,6 +49,15 @@
 
 // When on, BriCLI will automatically show the help message when an unknown command is received, default on
 #define BRICLI_SHOW_HELP_ON_ERROR 1
+
+// ==============================
+// ===== Logging Settings =======
+// ==============================
+
+/**
+ * @brief Logging function for displaying internal behaviour
+ */
+#define BRICLI_LOG(...) printf(__VA_ARGS__)
 
 // ===========================
 // ===== Colour Settings =====

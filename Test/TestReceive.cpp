@@ -19,7 +19,7 @@ namespace Cli {
         {
             {"test", Test_Handler, "Tests."}
         };
-        BricliHandle_t _cli = BRICLI_HANDLE_DEFAULT;
+        BricliHandle_t _cli;
         char _buffer[100] = {0};
 
         ReceiveTest() { }
@@ -36,12 +36,15 @@ namespace Cli {
             Test_Handler_fake.return_val = (int)BricliOk;
 
             // Configure our default BriCLI settings.
-            _cli.CommandList = _commandList;
-            _cli.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
-            _cli.RxBuffer = _buffer;
-            _cli.RxBufferSize = 100;
-            _cli.BspWrite = BspWrite;
-            _cli.LocalEcho = true;
+            BricliInit_t init = {0};
+			init.CommandList = _commandList;
+            init.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
+            init.RxBuffer = _buffer;
+            init.RxBufferSize = 100;
+            init.BspWrite = BspWrite;
+            init.LocalEcho = true;
+
+			Bricli_Init(&_cli, &init);
         }
 
         virtual void TearDown() 
