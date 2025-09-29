@@ -35,6 +35,16 @@ enable_testing()
 # Enable debug symbols
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
+# Add the auth test.
+add_executable(auth-test
+    ${SRC_DIR}/bricli.c
+    ${TEST_DIR}/TestAuth.cpp
+)
+target_include_directories(auth-test PUBLIC ${INC_DIR} ${LIB_DIR} ${SRC_DIR})
+target_link_libraries(auth-test GTest::gtest_main)
+target_compile_options(auth-test PRIVATE ${GCC_COVERAGE_COMPILE_FLAGS})
+target_link_options(auth-test PRIVATE ${GCC_COVERAGE_LINK_FLAGS})
+
 # Add the receive test.
 add_executable(receive-test
     ${SRC_DIR}/bricli.c
@@ -67,6 +77,7 @@ target_link_options(handler-test PRIVATE ${GCC_COVERAGE_LINK_FLAGS})
 
 # ---- Discover all GoogleTest binaries ----
 include(GoogleTest)
+gtest_discover_tests(auth-test PROPERTIES TEST_LIST unitTests)
 gtest_discover_tests(receive-test PROPERTIES TEST_LIST unitTests)
 gtest_discover_tests(send-test PROPERTIES TEST_LIST unitTests)
 gtest_discover_tests(handler-test PROPERTIES TEST_LIST unitTests)

@@ -1,8 +1,6 @@
 /**
  * @file    bricli.h
  * @brief   Header for the BriCLI library.
- * @date    28/06/2021
- * @version 1
  * @author  Anthony Wall
  *
  * Copyright (C) 2025 Anthony Wall.
@@ -26,7 +24,9 @@
 extern "C" {
 #endif
 
-/* DEFINES */
+// ===================
+// ===== Defines =====
+// ===================
 
 // Helper macro for calculating the size of statically typed array. This does NOT work on array parameters in C.
 #define BRICLI_STATIC_ARRAY_SIZE(array) ( sizeof(array) / sizeof(array[0]) )
@@ -96,6 +96,14 @@ extern "C" {
 #ifndef BRICLI_USE_INTENSE_BOLD
 // #define BRICLI_USE_INTENSE_BOLD     1 // Enables the use of high intensity bold text options.
 #endif // BRICLI_USE_INTENSE_BOLD
+
+#ifndef BRICLI_DEFAULT_EOL
+#define BRICLI_DEFAULT_EOL				"\n" // The default EoL string to be used when none is provided to init
+#endif // BRICLI_DEFAULT_EOL
+
+#ifndef BRICLI_DEFAULT_PROMPT
+#define BRICLI_DEFAULT_PROMPT			">> " // The default prompt string to be used when non is provided to init
+#endif // BRICLI_DEFAULT_PROMPT
 
 #endif // BRICLI_USE_COLOUR
 
@@ -180,7 +188,9 @@ extern "C" {
 // #define BHCYN "\e[1;96m"
 // #define BHWHT "\e[1;97m"
 
-/* TYPE DEFINITIONS */
+// =================
+// ===== Types =====
+// =================
 
 typedef enum _BricliLastError_t
 {
@@ -191,8 +201,9 @@ typedef enum _BricliLastError_t
 
 typedef enum _BricliErrors_t
 {
-    BricliUnknown            = -7,
-    BricliReceivedNull       = -6,
+    BricliUnknown            = -8,
+    BricliUnauthorized		 = -7,
+	BricliReceivedNull       = -6,
     BricliCopyWouldOverflow  = -5,
     BricliBadCommand         = -4,
     BricliBadParameter       = -3,
@@ -200,6 +211,13 @@ typedef enum _BricliErrors_t
     BricliBadFunction        = -1,
     BricliOk                 = 0
 } BricliErrors_t;
+
+typedef enum _BricliAuthErrors_t
+{
+    BricliAuthDenied = -1,       // Request for auth denied
+    BricliAuthGranted = 0,      // Request for auth elevation granted
+    BricliAuthRevoked = 1       // Request for auth decrease granted
+} _BricliAuthErrors_t;
 
 /**
  * @brief Enumerated VT100 colour options
@@ -257,6 +275,27 @@ typedef enum _BricliStates_t
 } BricliStates_t;
 
 /**
+ * @brief CLI Authorization scopes, represented as up to 32 bit flags
+ */
+typedef uint32_t BricliAuthScopes_t;
+
+// Unauthorized scope, available to anyone without login
+#define BricliScopeAll                  (0)
+
+// User scope
+#define BricliScopeUser                 (1 << 1)
+
+// Admin scope
+#define BricliScopeAdmin                (1 << 2)
+
+typedef struct _BricliAuthEntry_t
+{
+	const char *Username;
+	const char *Password;
+	BricliAuthScopes_t Scopes;
+} BricliAuthEntry_t;
+
+/**
  * @brief BSP function for writing data.
  *
  * This should be a wrapper function for your underlying peripheral. This
@@ -287,16 +326,34 @@ typedef void (*Bricli_StateChanged)(BricliStates_t oldState, BricliStates_t newS
  * @brief Holds specific details for a command entry used by this CLI.
  *
  * @param Name          The command name.
- * @param MaxArguments  Maximum number of arguments to look for.
  * @param Handler       Handler function for this command.
  * @param HelpMessage   Optional message to display with the built-in help command.
  */
 typedef struct _BricliCommand_t
 {
-    const char*             Name;           /*<< Command name. */
-    Bricli_CommandHandler  Handler;        /*<< Handler function for this command. */
-    const char*             HelpMessage;    /*<< Optional message to be displayed by the help command. */
+    const char*             Name;                   /*<< Command name. */
+    Bricli_CommandHandler   Handler;                /*<< Handler function for this command. */
+    const char*             HelpMessage;            /*<< Optional message to be displayed by the help command. */
+    BricliAuthScopes_t      AuthScopesRequired;     /*<< The authorisation scopes required to access this command. */
 } BricliCommand_t;
+
+/**
+ * @brief Initialistion options for a BriCLI instance
+ */
+typedef struct BricliInit_t
+{
+	const BricliAuthEntry_t *AuthList;
+	char *Eol;
+    char *SendEol;
+    char *Prompt;
+    Bricli_BspWrite BspWrite;
+    char *RxBuffer;
+    uint32_t RxBufferSize;
+    BricliCommand_t* CommandList;
+    uint32_t CommandListLength;
+    Bricli_StateChanged OnStateChanged;
+    bool LocalEcho;
+} BricliInit_t;
 
 /**
  * @brief Initializer for BriCLI to set the commands, bsp functions and EOL.
@@ -308,41 +365,41 @@ typedef struct _BricliCommand_t
  */
 typedef struct _BricliHandle_t
 {
-    BricliLastError_t      LastError;
-    BricliCommand_t*       CommandList;
+	const BricliAuthEntry_t *AuthList;
+	BricliAuthScopes_t      AuthScopes;
+    Bricli_BspWrite        	BspWrite;
+    BricliCommand_t*       	CommandList;
     uint32_t                CommandListLength;
-    Bricli_BspWrite        BspWrite;
     char*                   Eol;
-    char*                   RxBuffer;
-    uint32_t                RxBufferSize;
+    bool                    IsHandlingEscape;
+    BricliLastError_t      	LastError;
+    bool                    LocalEcho;
     uint32_t                PendingBytes;
     char*                   Prompt;
-    bool                    IsHandlingEscape;
-    BricliStates_t         State;
-    Bricli_StateChanged    OnStateChanged;
-    bool                    LocalEcho;
+    char*                   RxBuffer;
+    uint32_t                RxBufferSize;
     char *                  SendEol;
+    BricliStates_t         	State;
+    Bricli_StateChanged    	OnStateChanged;
 } BricliHandle_t;
 
-/**
- * @brief Default settings for BriCLI for quick initialisation.
- */
-#define BRICLI_HANDLE_DEFAULT { BricliErrorNone, NULL, 0, NULL, (char*)"\n", NULL, 0, 0, (char*)">> ", false, BricliStateIdle, NULL, false, NULL }
+// ==============================
+// ===== Exported Functions =====
+// ==============================
 
-/* FUNCTION DECLARATIONS */
-
-int Bricli_ParseCommand(BricliHandle_t* cli);
-int Bricli_Parse(BricliHandle_t* cli);
-BricliErrors_t Bricli_ReceiveCharacter(BricliHandle_t* cli, char rxChar);
-BricliErrors_t Bricli_ReceiveIndexedArray(BricliHandle_t *cli, uint32_t index, uint32_t length, char *array);
-bool Bricli_CheckForEol(BricliHandle_t* cli, bool replaceEol);
-void Bricli_Backspace(BricliHandle_t* cli);
-size_t Bricli_SplitOnEol(BricliHandle_t *cli);
-int Bricli_PrintHelp(BricliHandle_t* cli);
-int Bricli_PrintF(BricliHandle_t* cli, const char* format, ...);
-void Bricli_SetColour(BricliHandle_t* cli, BricliColours_t colourId);
-void Bricli_Reset(BricliHandle_t *cli);
-void Bricli_ClearCommand(BricliHandle_t *cli);
+extern BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t *settings);
+extern int Bricli_ParseCommand(BricliHandle_t* cli);
+extern int Bricli_Parse(BricliHandle_t* cli);
+extern BricliErrors_t Bricli_ReceiveCharacter(BricliHandle_t* cli, char rxChar);
+extern BricliErrors_t Bricli_ReceiveIndexedArray(BricliHandle_t *cli, uint32_t index, uint32_t length, char *array);
+extern bool Bricli_CheckForEol(BricliHandle_t* cli, bool replaceEol);
+extern void Bricli_Backspace(BricliHandle_t* cli);
+extern size_t Bricli_SplitOnEol(BricliHandle_t *cli);
+extern int Bricli_PrintHelp(BricliHandle_t* cli);
+extern int Bricli_PrintF(BricliHandle_t* cli, const char* format, ...);
+extern void Bricli_SetColour(BricliHandle_t* cli, BricliColours_t colourId);
+extern void Bricli_Reset(BricliHandle_t *cli);
+extern void Bricli_ClearCommand(BricliHandle_t *cli);
 
 /**
  * @brief Helper macro for calling Bricli_PrintF with colour support.

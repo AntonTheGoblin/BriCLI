@@ -3,6 +3,29 @@ BriCLI (pronounced Bric-lee) is an easy-to-use C Command Line Interface library
 
 ![BriCLI Output](Images/BriCLI.png "BriCLI Output")
 
+## Contents 
+- [BriCLI](#bricli)
+	- [Contents](#contents)
+	- [A Note About Escape Codes](#a-note-about-escape-codes)
+	- [Install Guide](#install-guide)
+	- [Configuration](#configuration)
+	- [Examples](#examples)
+	- [Porting Guide](#porting-guide)
+	- [User Guide](#user-guide)
+		- [Adding BriCLI to your project](#adding-bricli-to-your-project)
+		- [Initialisation](#initialisation)
+		- [Basic Command Loop](#basic-command-loop)
+		- [Different Send and Receive EoLs](#different-send-and-receive-eols)
+			- [Normal operation with just Eol](#normal-operation-with-just-eol)
+			- [Seperate operation with Eol and SendEol](#seperate-operation-with-eol-and-sendeol)
+		- [Custom Parsing](#custom-parsing)
+		- [State Change Events](#state-change-events)
+		- [Command Handlers](#command-handlers)
+		- [Command List](#command-list)
+		- [Built-In Commands](#built-in-commands)
+		- [Authentication](#authentication)
+
+
 ## A Note About Escape Codes
 Currently escape codes aren't supported, it is recommended that your application ignore escape codes prior to them reaching BriCLI as shown in the examples.
 
@@ -63,15 +86,19 @@ static BricliCommand_t _commandList[] =
 
 int main(void)
 {
-    BricliHandle_t cli = BRICLI_HANDLE_DEFAULT;
-    cli.Eol = "\r";     
-    cli.SendEol = NULL; // Set this to have BriCLI use a different EoL in Bricli_WriteLine* functions.
-    cli.BspWrite = Bsp_Write;
-    cli.CommandList = _commandList;
-    cli.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
-    cli.RxBuffer = _rxBuffer;
-    cli.RxBufferSize = RX_BUFFER_SIZE;
-    cli.LocalEcho = true;
+    BricliHandle_t cli;
+	BricliInit_t cliInit = {0};
+
+    cliInit.Eol = "\r";     
+    cliInit.SendEol = NULL; // Set this to have BriCLI use a different EoL in Bricli_WriteLine* functions.
+    cliInit.BspWrite = Bsp_Write;
+    cliInit.CommandList = _commandList;
+    cliInit.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
+    cliInit.RxBuffer = _rxBuffer;
+    cliInit.RxBufferSize = RX_BUFFER_SIZE;
+    cliInit.LocalEcho = true;
+
+	Bricli_Init(&cli, &cliInit);
     
     // ...
 }
@@ -245,4 +272,35 @@ There are two built in commands that are provided by BriCLI <code>clear</code> a
 <code>help</code> will display all commands in the cli's command list, including built-in commands, along with their HelpMessage if one was provided
 
 ![BriCLI Help Output](Images/BriCLIHelp.png "Help Message Output")
+
+### Authentication
+BriCLI offers a built-in scope based authentication system based loosely on AuthN/AuthZ practices. The default scope for commands is `BricliScopeAll` which can be accessed by all users, including those not authenticated
+
+Authentication (AuthN) is the process of a user logging in, BriCLI does this using the `login <user> <pass>` system command.
+
+BriCLI then checks the init provided `AuthList` for a match, if one is found the authorization (AuthZ) scopes are applied and all relevant commands are unlocked for use.
+
+In the sample below the commands `ping` and `exit` are available to all users of the CLI, even those not logged in. The `info` command is available to user1 and admin while the `reset` command is only available to admin.
+
+Scopes can be extended with up to 30 additional flags (1 for each 32bit entry). The Admin `(1 << 1)` and User `(1 << 0)` scopes are provided for convenience.
+
+```c
+static BricliCommand_t _commandList[] =
+{
+    { "ping", Ping_Handler, "Pong!", BricliScopeAll },
+	{ "info", Info_Handler, "Display system status", BricliScopeUser },
+    { "reset", Reset_Handler, "Force a device reset", BricliScopeAdmin },
+    { "exit", Exit_Handler, "Exits the application", BricliScopeAll }
+};
+
+static BricliAuthEntry_t _authList[] =
+{
+	{"user1", "somePass", BricliScopeUser},
+	{"admin", "Pass123", (BricliScopeAdmin | BricliScopeUser)}
+};
+```
+
+The `logout` command can be used to reset authorization scopes.
+
+![BriCLI Authorization Output](Images/BriCLIAuthentication.png "Authorization Output")
 

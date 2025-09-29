@@ -2,8 +2,6 @@
  * @file    bricli.c
  * @brief   BriCLI source, provides a lightweight CLI implementation.
  *          Supports VT100 ANSI escape codes.
- * @date    28/06/2021
- * @version 1
  * @author  Anthony Wall
  *
  * Copyright (C) 2025 Anthony Wall.
@@ -11,17 +9,23 @@
  *
  **/
 
-/* INCLUDES */
+// ====================
+// ===== Includes =====
+// ====================
+
 // Fix for "strtok_r" not found on default C99 GNU builds.
 #ifdef __GNUC__
     #define _GNU_SOURCE
 #endif // __GNUC__
+
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 #include "bricli.h"
 
-/* CONSTANTS */
+// =====================
+// ===== Constants =====
+// =====================
 
 #if BRICLI_USE_COLOUR
 static const char *_colourReset = "\e[0m";
@@ -83,7 +87,9 @@ static const char *_backgroundTable[] =
 #endif // BRICLI_USE_BACKGROUNDS
 #endif // BRICLI_USE_COLOUR
 
-/* LOCAL FUNCTIONS */
+// ===========================
+// ===== Local Functions =====
+// ===========================
 
 /**
  * @brief Extracts arguments from a given argument string. Arguments must be separated by spaces.
@@ -181,7 +187,344 @@ static inline void Bricli_ChangeState(BricliHandle_t* cli, BricliStates_t newSta
     }
 }
 
-/* FUNCTION DEFINITIONS */
+/**
+ * @brief Validates whether the given command is available under the current auth scopes 
+ * 
+ * @param cli Pointer to the BriCLI instance to use
+ * @param command Pointer to a command to verify
+ * @return bool True if the command is within auth scope, false otherwise
+ */
+static bool Bricli_IsCommandInScope(BricliHandle_t* cli, BricliCommand_t *command)
+{	
+	if (command->AuthScopesRequired == BricliScopeAll)
+	{
+		// Command is available to all scopes
+		return true;
+	}
+	else if ((cli->AuthScopes & command->AuthScopesRequired) != 0)
+	{
+		// Command is available under granted scopes
+		return true;
+	}
+	else
+	{
+		// Command is not available
+		return false;
+	}
+}
+
+// ===========================
+// ===== System Commands =====
+// ===========================
+
+/**
+ * @brief Command handler function, one should be provided for every command.
+ *
+ * @param numberOfArgs The number of arguments found.
+ * @param args         Array of argument string found.
+ */
+typedef int (*Bricli_SystemCommandHandler)(BricliHandle_t *cli, uint32_t numberOfArgs, char* args[]);
+
+/**
+ * @brief Internal command handler
+ */
+typedef struct _BricliSystemCommand_t
+{
+    const char*             Name;                   /*<< Command name. */
+    Bricli_SystemCommandHandler   Handler;                /*<< Handler function for this command. */
+    const char*             HelpMessage;            /*<< Optional message to be displayed by the help command. */
+} BricliSystemCommand_t;
+
+static int Bricli_SystemHandlerHelp(BricliHandle_t *cli, uint32_t numberOfArgs, char *args[]);
+static int Bricli_SystemHandlerClear(BricliHandle_t *cli, uint32_t numberOfArgs, char *args[]);
+static int Bricli_SystemHandlerLogin(BricliHandle_t *cli, uint32_t numberOfArgs, char *args[]);
+static int Bricli_SystemHandlerLogout(BricliHandle_t *cli, uint32_t numberOfArgs, char *args[]);
+
+/**
+ * @brief Internal system command list
+ */
+static const BricliSystemCommand_t _systemCommands[] =
+{
+	{"help", Bricli_SystemHandlerHelp, "Displays this help message"},
+	{"clear", Bricli_SystemHandlerClear, "Clears the terminal"},
+	{"login", Bricli_SystemHandlerLogin, "Login to the terminal"},
+	{"logout", Bricli_SystemHandlerLogout, "Logout from the terminal"},
+	{0}
+};
+
+/**
+ * @brief System command for displaying a help message
+ * 
+ * @param cli Pointer to the CLI instance
+ * @param numberOfArgs The number of arguments received
+ * @param args The arguments list
+ * @return int 0 for success, negative for error
+ */
+static int Bricli_SystemHandlerHelp(BricliHandle_t *cli, uint32_t numberOfArgs, char *args[])
+{
+	// Unused parameters
+	(void)numberOfArgs;
+	(void)args;
+
+	// Print the system commands first.
+	const BricliSystemCommand_t *systemCommand = &_systemCommands[0];
+	while(systemCommand->Name != NULL)
+	{
+		if (cli->SendEol == NULL)
+		{
+			Bricli_PrintF(cli, "%s - %s%s", systemCommand->Name, systemCommand->HelpMessage, cli->Eol);
+		}
+		else
+		{
+			Bricli_PrintF(cli, "%s - %s%s", systemCommand->Name, systemCommand->HelpMessage, cli->SendEol);
+		}
+
+		// Increment the pointer
+		systemCommand++;
+	}
+	
+	// Print all registered user commands.
+	BricliCommand_t *command = NULL;
+	for (uint8_t i = 0; i < cli->CommandListLength; i++)
+    {
+        command = &cli->CommandList[i];
+
+		// Only display help if the command is available to the current auth scope
+		if (Bricli_IsCommandInScope(cli, command))
+		{
+			// Send the help message for each command.
+			if (command->HelpMessage == NULL)
+			{
+				if (cli->SendEol == NULL)
+				{
+					Bricli_PrintF(cli, "%s%s", command->Name, cli->Eol);
+				}
+				else
+				{
+					Bricli_PrintF(cli, "%s%s", command->Name, cli->SendEol);
+				}
+			}
+			else
+			{
+				if (cli->SendEol == NULL)
+				{
+					Bricli_PrintF(cli, "%s - %s%s", command->Name, command->HelpMessage, cli->Eol);
+				}
+				else
+				{
+					Bricli_PrintF(cli, "%s - %s%s", command->Name, command->HelpMessage, cli->SendEol);
+				}
+			}
+		}
+    }
+
+	return BricliOk;
+}
+
+/**
+ * @brief System command for clearing the buffer
+ * 
+ * @param cli Pointer to the CLI instance
+ * @param numberOfArgs The number of arguments received
+ * @param args The arguments list
+ * @return int 0 for success, negative for error
+ */
+static int Bricli_SystemHandlerClear(BricliHandle_t *cli, uint32_t numberOfArgs, char *args[])
+{
+	// Unused parameters
+	(void)numberOfArgs;
+	(void)args;
+
+	Bricli_ClearScreen(cli);
+	return BricliOk;
+}
+
+/**
+ * @brief System command for logging in as an authenticated user
+ * 
+ * @param cli Pointer to the CLI instance
+ * @param numberOfArgs The number of arguments received
+ * @param args The arguments list
+ * @return int 0 for success, negative for error
+ */
+static int Bricli_SystemHandlerLogin(BricliHandle_t *cli, uint32_t numberOfArgs, char *args[])
+{
+	int result = -1;
+
+	if (numberOfArgs < 2)
+	{
+		Bricli_WriteStringColouredLine(cli, "ERROR: login requires 2 arguments!", BricliTextRed);
+		goto cleanup;
+	}
+
+	if (NULL == cli->AuthList)
+	{
+		Bricli_WriteStringColouredLine(cli, "ERROR: No authentication provider registered", BricliTextRed);
+		goto cleanup;
+	}
+
+	// Helper pointers for our arguments
+	const char *user = args[0];
+	const char *pass = args[1];
+
+	// Search the auth provider for a matching user
+	const BricliAuthEntry_t *authEntry = &cli->AuthList[0];
+	while (NULL != authEntry->Username)
+	{
+		// Search for a matching username
+		if (strcmp(user, authEntry->Username) == 0)
+		{
+			// Search for a matching password
+			if (strcmp(pass, authEntry->Password) == 0)
+			{
+				// Update our active scopes
+				cli->AuthScopes = authEntry->Scopes;
+
+				// Success
+				result = 0;
+				if (cli->SendEol == NULL)
+				{
+					Bricli_PrintF(cli, "Logged in as %s%s", authEntry->Username, cli->Eol);
+				}
+				else
+				{
+					Bricli_PrintF(cli, "Logged in as %s%s", authEntry->Username, cli->SendEol);
+				}
+
+				goto cleanup;
+			}
+			else
+			{
+				// Password mismatch
+				result = -2;
+				goto cleanup;
+			}
+		}
+		
+		// Increment the pointer
+		authEntry++;
+	}
+
+	// If we get here then we didn't find a matching user
+	result = -2;
+
+cleanup:
+	// If we have an error report back
+	if (result == -2)
+		Bricli_WriteStringColouredLine(cli, "ERROR: Invalid username or password", BricliTextRed);
+
+	return result;
+}
+
+/**
+ * @brief System command for logging out of the current authenticated user
+ * 
+ * @param cli Pointer to the CLI instance
+ * @param numberOfArgs The number of arguments received
+ * @param args The arguments list
+ * @return int 0 for success, negative for error
+ */
+static int Bricli_SystemHandlerLogout(BricliHandle_t *cli, uint32_t numberOfArgs, char *args[])
+{
+	int result = 0;
+
+	if (cli->AuthScopes != BricliScopeAll)
+	{
+		// Reset auth scopes
+		cli->AuthScopes = BricliScopeAll;
+		Bricli_WriteString(cli, "Logged out of session\n");
+	}
+	else
+	{
+		// Not logged in, so can't log out
+		Bricli_WriteString(cli, "No active login session found\n");
+	}
+
+	return result;
+}
+
+// ==============================
+// ===== Exported Functions =====
+// ==============================
+
+BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* settings)
+{
+	BricliErrors_t result = BricliUnknown;
+
+	// Validate pointers
+	if (NULL == cli || NULL == settings)
+	{
+		BRICLI_LOG("BriCLI: NULL pointer in %s\n", __func__);
+		result = BricliBadParameter;
+		goto cleanup;
+	}
+
+	// Validate buffer settings
+	if (NULL == settings->RxBuffer || 0 == settings->RxBufferSize)
+	{
+		BRICLI_LOG("BriCLI: Invalid RX buffer in %s\n", __func__);
+		result = BricliBadParameter;
+		goto cleanup;
+	}
+
+	// Validate command list settings
+	if (NULL == settings->CommandList || 0 == settings->CommandListLength)
+	{
+		BRICLI_LOG("BriCLI: Invalid Command List in %s\n", __func__);
+		result = BricliBadParameter;
+		goto cleanup;
+	}
+
+	// Validate BSP Write function
+	if (NULL == settings->BspWrite)
+	{
+		BRICLI_LOG("BriCLI: Invalid BspWrite in %s\n", __func__);
+		result = BricliBadParameter;
+		goto cleanup;
+	}
+	
+	// Initialise the CLI to zero
+	memset(cli, 0, sizeof(BricliHandle_t));
+
+	// EOL string
+	if (NULL != settings->Eol)
+		cli->Eol = settings->Eol;
+	else
+		cli->Eol = BRICLI_DEFAULT_EOL;
+	
+	// Prompt string
+	if (NULL != settings->Prompt)
+		cli->Prompt = settings->Prompt;
+	else
+		cli->Prompt = BRICLI_DEFAULT_PROMPT;
+
+	// RX Buffer settings
+	cli->RxBuffer = settings->RxBuffer;
+	cli->RxBufferSize = settings->RxBufferSize;
+
+	// Command List settings
+	cli->CommandList = settings->CommandList;
+	cli->CommandListLength = settings->CommandListLength;
+
+	// BSP settings
+	cli->BspWrite = settings->BspWrite;
+	
+	// Event settings
+	cli->OnStateChanged = settings->OnStateChanged;
+
+	// Flag settings
+	cli->LocalEcho = settings->LocalEcho;
+
+	// Auth list
+	if (NULL != settings->AuthList)
+		cli->AuthList = settings->AuthList;
+
+	// Success
+	result = BricliOk;
+
+cleanup:
+	return result;
+}
 
 #if BRICLI_USE_COLOUR
 /**
@@ -340,6 +683,7 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
 {
     char command[BRICLI_MAX_COMMAND_LEN + 1] = {0};
     char arguments[BRICLI_ARGUMENT_BUFFER_LEN] = {0};
+	char *ArgumentsFound[BRICLI_MAX_ARGUMENTS] = {0};
     uint32_t commandLength = 0;
     uint32_t argumentLength = 0;
 
@@ -394,25 +738,29 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
     }
     memcpy(command, (void *)cli->RxBuffer, commandLength);
 
-    // Check if this is a system command first.
-    if (strcmp(command, "help") == 0)
-    {
-        Bricli_ChangeState(cli, BricliStateHandlerRunning);
-        Bricli_PrintHelp(cli);
-        Bricli_ChangeState(cli, BricliStateFinished);
-        return BricliOk;
-    }
-    else if (strcmp(command, "clear") == 0)
-    {
-        Bricli_ChangeState(cli, BricliStateHandlerRunning);
-        Bricli_ClearScreen(cli);
-        Bricli_ChangeState(cli, BricliStateFinished);
-        return BricliOk;
-    }
+	// Extract additional arguments.
+	uint8_t numberOfArguments = Bricli_ExtractArguments(arguments, ArgumentsFound);
 
-    // Not a system command so look to our command list for a match.
-    BricliCommand_t *cliCommand = NULL;
-    for (uint8_t i = 0; i < cli->CommandListLength; i++)
+    // Check if this is a system command.
+	const BricliSystemCommand_t *systemCommand = &_systemCommands[0];
+	while (systemCommand->Name != NULL)
+	{
+		if (strcmp(command, systemCommand->Name) == 0)
+		{
+			// Call the command's handler function.
+            Bricli_ChangeState(cli, BricliStateHandlerRunning);
+			systemCommand->Handler(cli, numberOfArguments, ArgumentsFound);
+            Bricli_ChangeState(cli, BricliStateFinished);
+
+			return BricliOk;
+		}
+
+		systemCommand++;
+	}
+
+	// Not a system command so look to our command list for a match.
+	BricliCommand_t *cliCommand = NULL;
+	for (uint8_t i = 0; i < cli->CommandListLength; i++)
     {
         // Get the next CLI Command reference.
         cliCommand = &cli->CommandList[i];
@@ -420,33 +768,49 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
         // Check if we have found a match.
         if (strcmp(command, cliCommand->Name) == 0)
         {
-            char *ArgumentsFound[BRICLI_MAX_ARGUMENTS] = {0};
+			int result = BricliUnknown;
 
-            // Extract additional arguments.
-            uint8_t numberOfArguments = Bricli_ExtractArguments(arguments, ArgumentsFound);
+			// Check our authentication scopes
+			if (Bricli_IsCommandInScope(cli, cliCommand))
+			{
+				// Call the command's handler function.
+				Bricli_ChangeState(cli, BricliStateHandlerRunning);
+				result = cliCommand->Handler(numberOfArguments, ArgumentsFound);
+				Bricli_ChangeState(cli, BricliStateFinished);
+	
+				// Check the result code.
+				if (result < 0)
+				{
+					// If enabled, display the error code to the user.
+				#if BRICLI_SHOW_COMMAND_ERRORS
+					if (cli->SendEol == NULL)
+					{
+						BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->Eol);
+					}
+					else
+					{
+						BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->SendEol);
+					}
+				#endif // BRICLI_SHOW_COMMAND_ERRORS
+	
+					cli->LastError = BricliErrorCommand;
+				}
+			}
+			else
+			{
+				cli->LastError = BricliErrorInternal;
+				result = BricliUnauthorized;
 
-            // Call the command's handler function.
-            Bricli_ChangeState(cli, BricliStateHandlerRunning);
-            int result = cliCommand->Handler(numberOfArguments, ArgumentsFound);
-            Bricli_ChangeState(cli, BricliStateFinished);
-
-            // Check the result code.
-            if (result < 0)
-            {
-                // If enabled, display the error code to the user.
-#if BRICLI_SHOW_COMMAND_ERRORS
-                if (cli->SendEol == NULL)
-                {
-                    BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->Eol);
-                }
-                else
-                {
-                    BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->SendEol);
-                }
-#endif // BRICLI_SHOW_COMMAND_ERRORS
-
-                cli->LastError = BricliErrorCommand;
-            }
+				if (cli->SendEol == NULL)
+				{
+					Bricli_PrintF(cli, "Unknown Command %s%s", command, cli->Eol);
+				}
+				else
+				{
+					Bricli_PrintF(cli, "Unknown Command %s%s", command, cli->SendEol);
+				}
+			}
+			
             return result;
         }
     }
@@ -677,7 +1041,7 @@ void Bricli_Backspace(BricliHandle_t *cli)
 }
 
 /**
-  * @brief Helper function for sending formatted messages through a CLI instance.
+  * @brief Helper function for displaying help information.
   *
   * @param cli Pointer to a BriCLI instance.
   * @param format Format string to be used for message generation.
@@ -686,42 +1050,7 @@ void Bricli_Backspace(BricliHandle_t *cli)
   */
 int Bricli_PrintHelp(BricliHandle_t *cli)
 {
-    BricliCommand_t *command = NULL;
-
-    // Print the system commands first.
-    Bricli_WriteStringLine(cli, "help - Displays this help message");
-    Bricli_WriteStringLine(cli, "clear - Clears the terminal");
-
-    // Print the user commands.
-    for (uint8_t i = 0; i < cli->CommandListLength; i++)
-    {
-        command = &cli->CommandList[i];
-
-        // Send the help message for each command.
-        if (command->HelpMessage == NULL)
-        {
-            if (cli->SendEol == NULL)
-            {
-                Bricli_PrintF(cli, "%s%s", command->Name, cli->Eol);
-            }
-            else
-            {
-                Bricli_PrintF(cli, "%s%s", command->Name, cli->SendEol);
-            }
-        }
-        else
-        {
-            if (cli->SendEol == NULL)
-            {
-                Bricli_PrintF(cli, "%s - %s%s", command->Name, command->HelpMessage, cli->Eol);
-            }
-            else
-            {
-                Bricli_PrintF(cli, "%s - %s%s", command->Name, command->HelpMessage, cli->SendEol);
-            }
-        }
-    }
-    return 0;
+	return Bricli_SystemHandlerHelp(cli, 0, NULL);
 }
 
 /**

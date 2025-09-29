@@ -17,6 +17,20 @@ FAKE_VALUE_FUNC(int, Test_Handler, uint32_t, char **);
 FAKE_VALUE_FUNC(int, Argument_Handler, uint32_t, char **);
 FAKE_VOID_FUNC(Test_StateChanged, BricliStates_t, BricliStates_t);
 
+static char _stringHistory[50][80] = {0};
+static uint8_t _stringHistoryCount = 0;
+
+int CustomBspWriteFake(uint32_t length, const char* data)
+{
+	printf("%s", data);
+
+	memset(&_stringHistory[_stringHistoryCount][0], 0, 80);
+	memcpy(&_stringHistory[_stringHistoryCount][0], data, length);
+	_stringHistoryCount++;
+
+	return BspWrite_fake.return_val;
+}
+
 namespace Cli {
 
     // Test function used for debugging handler passing.
@@ -35,10 +49,10 @@ namespace Cli {
     protected:
         BricliCommand_t _commandList[2] =
         {
-            {"test", Test_Handler, "Tests."},
-            {"args", Argument_Handler, "Test Arguments"}
+            {"test", Test_Handler, "Tests", BricliScopeAll},
+            {"args", Argument_Handler, "Test Arguments", BricliScopeAll}
         };
-        BricliHandle_t _cli = BRICLI_HANDLE_DEFAULT;
+        BricliHandle_t _cli;
         char _buffer[100] = {0};
 
         HandlerTest() { }
@@ -52,25 +66,101 @@ namespace Cli {
             RESET_FAKE(Argument_Handler);
             RESET_FAKE(Test_StateChanged);
 
-            // Pre-load return values for the fakes.
+			// Reset string history
+			memset(&_stringHistory[0][0], 0, (50 * 80));
+			_stringHistoryCount = 0;
+
+			// Pre-load return values for the fakes.
             BspWrite_fake.return_val = (int)BricliOk;
+			BspWrite_fake.custom_fake = CustomBspWriteFake;
             Test_Handler_fake.return_val = (int)BricliOk;
             Argument_Handler_fake.return_val = (int)BricliOk;
 
             // Configure our default BriCLI settings.
-            _cli.CommandList = _commandList;
-            _cli.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
-            _cli.RxBuffer = _buffer;
-            _cli.RxBufferSize = 100;
-            _cli.BspWrite = BspWrite;
-            _cli.OnStateChanged = Test_StateChanged;
-        }
+			BricliInit_t init = {0};
+			init.CommandList = _commandList;
+            init.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
+            init.RxBuffer = _buffer;
+            init.RxBufferSize = 100;
+            init.BspWrite = BspWrite;
+            init.OnStateChanged = Test_StateChanged;
+
+			Bricli_Init(&_cli, &init);
+		}
 
         virtual void TearDown() 
         {
             Bricli_ClearBuffer(&_cli);
         }
     };
+
+	TEST_F(HandlerTest, InitErrors)
+	{
+		BricliHandle_t initCli;
+		BricliInit_t initSettings = {0};
+
+		// NULL pointers
+		EXPECT_EQ(BricliBadParameter, Bricli_Init(NULL, &initSettings));
+		EXPECT_EQ(BricliBadParameter, Bricli_Init(&initCli, NULL));
+
+		// Bad RX Buffer
+		EXPECT_EQ(BricliBadParameter, Bricli_Init(&initCli, &initSettings));
+		initSettings.RxBuffer = _buffer;
+		EXPECT_EQ(BricliBadParameter, Bricli_Init(&initCli, &initSettings));
+		initSettings.RxBufferSize = 100;
+
+		// Bad Command List
+		EXPECT_EQ(BricliBadParameter, Bricli_Init(&initCli, &initSettings));
+		initSettings.CommandList = _commandList;
+		EXPECT_EQ(BricliBadParameter, Bricli_Init(&initCli, &initSettings));
+		initSettings.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
+		
+		// Bad BspWrite
+		EXPECT_EQ(BricliBadParameter, Bricli_Init(&initCli, &initSettings));
+		initSettings.BspWrite = BspWrite;
+
+		// Valid setup
+		EXPECT_EQ(BricliOk, Bricli_Init(&initCli, &initSettings));
+	}
+
+	TEST_F(HandlerTest, InitDefaults)
+	{
+		BricliHandle_t initCli;
+		BricliInit_t initSettings = {0};
+		
+		initSettings.RxBuffer = _buffer;
+		initSettings.RxBufferSize = 100;
+		initSettings.CommandList = _commandList;
+		initSettings.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
+		initSettings.BspWrite = BspWrite;
+
+		// Valid setup
+		EXPECT_EQ(BricliOk, Bricli_Init(&initCli, &initSettings));
+		EXPECT_STREQ(BRICLI_DEFAULT_EOL, initCli.Eol);
+		EXPECT_STREQ(BRICLI_DEFAULT_PROMPT, initCli.Prompt);
+	}
+
+	TEST_F(HandlerTest, InitCustom)
+	{
+		BricliHandle_t initCli;
+		BricliInit_t initSettings = {0};
+		
+		initSettings.RxBuffer = _buffer;
+		initSettings.RxBufferSize = 100;
+		initSettings.CommandList = _commandList;
+		initSettings.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
+		initSettings.BspWrite = BspWrite;
+
+		initSettings.Eol = (char *)"\r\n";
+		initSettings.Prompt = (char *)"$ ";
+		initSettings.OnStateChanged = (Bricli_StateChanged)0x02;
+
+		// Valid setup
+		EXPECT_EQ(BricliOk, Bricli_Init(&initCli, &initSettings));
+		EXPECT_STREQ("\r\n", initCli.Eol);
+		EXPECT_STREQ("$ ", initCli.Prompt);
+		EXPECT_EQ((Bricli_StateChanged)0x02, initCli.OnStateChanged);
+	}
 
     TEST_F(HandlerTest, ReceiveHandler)
     {
@@ -190,11 +280,15 @@ namespace Cli {
         error = (BricliErrors_t)Bricli_Parse(&_cli);
         EXPECT_EQ(error, BricliBadCommand);
 
-        // Should have 8 calls: Error, 4 help messages with 2 automatic eols, Prompt
-        EXPECT_EQ(BspWrite_fake.call_count, 8);
-        // Make sure our system commands are called.
-        EXPECT_STREQ(BspWrite_fake.arg1_history[1], "help - Displays this help message");
-        EXPECT_STREQ(BspWrite_fake.arg1_history[3], "clear - Clears the terminal");
+        // Should have 10 calls: 1 unknown command, 4 system commands, 2 user commands, 1 prompt
+        EXPECT_EQ(_stringHistoryCount, 8);
+
+        // Make sure the output is valid.
+        EXPECT_STREQ(&_stringHistory[0][0], "Unknown Command abcdef\n");
+        EXPECT_STREQ(&_stringHistory[1][0], "help - Displays this help message\n");
+        EXPECT_STREQ(&_stringHistory[2][0], "clear - Clears the terminal\n");
+        EXPECT_STREQ(&_stringHistory[3][0], "login - Login to the terminal\n");
+        EXPECT_STREQ(&_stringHistory[4][0], "logout - Logout from the terminal\n");
     }
 
     TEST_F(HandlerTest, ErrorPropagation)
