@@ -85,7 +85,62 @@ namespace Cli {
 		EXPECT_EQ(BricliBadParameter, Bricli_Init(&initCli, NULL));
 
 		// Bad RX Buffer
-		initSettings.
+		EXPECT_EQ(BricliBadParameter, Bricli_Init(&initCli, &initSettings));
+		initSettings.RxBuffer = _buffer;
+		EXPECT_EQ(BricliBadParameter, Bricli_Init(&initCli, &initSettings));
+		initSettings.RxBufferSize = 100;
+
+		// Bad Command List
+		EXPECT_EQ(BricliBadParameter, Bricli_Init(&initCli, &initSettings));
+		initSettings.CommandList = _commandList;
+		EXPECT_EQ(BricliBadParameter, Bricli_Init(&initCli, &initSettings));
+		initSettings.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
+		
+		// Bad BspWrite
+		EXPECT_EQ(BricliBadParameter, Bricli_Init(&initCli, &initSettings));
+		initSettings.BspWrite = BspWrite;
+
+		// Valid setup
+		EXPECT_EQ(BricliOk, Bricli_Init(&initCli, &initSettings));
+	}
+
+	TEST_F(HandlerTest, InitDefaults)
+	{
+		BricliHandle_t initCli;
+		BricliInit_t initSettings = {0};
+		
+		initSettings.RxBuffer = _buffer;
+		initSettings.RxBufferSize = 100;
+		initSettings.CommandList = _commandList;
+		initSettings.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
+		initSettings.BspWrite = BspWrite;
+
+		// Valid setup
+		EXPECT_EQ(BricliOk, Bricli_Init(&initCli, &initSettings));
+		EXPECT_STREQ(BRICLI_DEFAULT_EOL, initCli.Eol);
+		EXPECT_STREQ(BRICLI_DEFAULT_PROMPT, initCli.Prompt);
+	}
+
+	TEST_F(HandlerTest, InitCustom)
+	{
+		BricliHandle_t initCli;
+		BricliInit_t initSettings = {0};
+		
+		initSettings.RxBuffer = _buffer;
+		initSettings.RxBufferSize = 100;
+		initSettings.CommandList = _commandList;
+		initSettings.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
+		initSettings.BspWrite = BspWrite;
+
+		initSettings.Eol = (char *)"\r\n";
+		initSettings.Prompt = (char *)"$ ";
+		initSettings.OnStateChanged = (Bricli_StateChanged)0x02;
+
+		// Valid setup
+		EXPECT_EQ(BricliOk, Bricli_Init(&initCli, &initSettings));
+		EXPECT_STREQ("\r\n", initCli.Eol);
+		EXPECT_STREQ("$ ", initCli.Prompt);
+		EXPECT_EQ((Bricli_StateChanged)0x02, initCli.OnStateChanged);
 	}
 
     TEST_F(HandlerTest, ReceiveHandler)

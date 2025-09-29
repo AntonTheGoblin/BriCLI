@@ -311,6 +311,23 @@ typedef struct _BricliCommand_t
 } BricliCommand_t;
 
 /**
+ * @brief Initialistion options for a BriCLI instance
+ */
+typedef struct BricliInit_t
+{
+    char *Eol;
+    char *SendEol;
+    char *Prompt;
+    Bricli_BspWrite BspWrite;
+    char *RxBuffer;
+    uint32_t RxBufferSize;
+    BricliCommand_t* CommandList;
+    uint32_t CommandListLength;
+    Bricli_StateChanged OnStateChanged;
+    bool LocalEcho;
+} BricliInit_t;
+
+/**
  * @brief Initializer for BriCLI to set the commands, bsp functions and EOL.
  *
  * @param LastError       Determines whether the last error came from BriCLI or a command.

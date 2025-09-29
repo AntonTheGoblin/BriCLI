@@ -244,7 +244,21 @@ BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* settings)
 	else
 		cli->Prompt = BRICLI_DEFAULT_PROMPT;
 
-	// Local echo
+	// RX Buffer settings
+	cli->RxBuffer = settings->RxBuffer;
+	cli->RxBufferSize = settings->RxBufferSize;
+
+	// Command List settings
+	cli->CommandList = settings->CommandList;
+	cli->CommandListLength = settings->CommandListLength;
+
+	// BSP settings
+	cli->BspWrite = settings->BspWrite;
+	
+	// Event settings
+	cli->OnStateChanged = settings->OnStateChanged;
+
+	// Flag settings
 	cli->LocalEcho = settings->LocalEcho;
 
 	// Success

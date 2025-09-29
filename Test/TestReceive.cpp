@@ -53,15 +53,6 @@ namespace Cli {
         }
     };
 
-    TEST_F(ReceiveTest, Init)
-    {
-        EXPECT_EQ(_cli.Eol, "\n");
-        EXPECT_EQ(_cli.RxBufferSize, 100);
-        EXPECT_EQ(_cli.RxBuffer, _buffer);
-        EXPECT_EQ(_cli.Prompt, ">> ");
-        EXPECT_EQ(_cli.State, BricliStateIdle);
-    }
-
     TEST_F(ReceiveTest, ReceiveLine)
     {
         std::string testCommand = "test\n";
