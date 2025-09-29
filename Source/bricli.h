@@ -213,6 +213,13 @@ typedef enum _BricliErrors_t
     BricliOk                 = 0
 } BricliErrors_t;
 
+typedef enum _BricliAuthErrors_t
+{
+    BricliAuthDenied = -1,       // Request for auth denied
+    BricliAuthGranted = 0,      // Request for auth elevation granted
+    BricliAuthRevoked = 1       // Request for auth decrease granted
+} _BricliAuthErrors_t;
+
 /**
  * @brief Enumerated VT100 colour options
  */
@@ -269,6 +276,43 @@ typedef enum _BricliStates_t
 } BricliStates_t;
 
 /**
+ * @brief CLI Authentication levels
+ */
+typedef uint32_t BricliAuthLevel_t;
+
+// No authentication required
+#define BricliAuthNone                  (0)
+
+// User level authentication
+#define BricliAuthUser                  (1)
+
+// Admin level authentication
+#define BricliAuthAdmin                 (2)
+
+/**
+ * @brief CLI Authorization scopes, represented as up to 32 bit flags
+ */
+typedef uint32_t BricliAuthScopes_t;
+
+// Unauthorized scope, available to anyone without login
+#define BricliScopeAll                  (0)
+
+// User scope
+#define BricliScopeUser                 (1 << 1)
+
+// Admin scope, includes user level privileges 
+#define BricliScopeAdmin                ((1 << 2) | BricliScopeUser)
+
+/**
+ * @brief Return type for authentication requests
+ */
+typedef struct _BricliAuthResult_t
+{
+    _BricliAuthErrors_t Result;     // The result code, BricliOk if auth was achieved otherwise an error
+    BricliAuthLevel_t AuthLevel;    // The Auth level being modified
+} BricliAuthResult_t;
+
+/**
  * @brief BSP function for writing data.
  *
  * This should be a wrapper function for your underlying peripheral. This
@@ -299,15 +343,15 @@ typedef void (*Bricli_StateChanged)(BricliStates_t oldState, BricliStates_t newS
  * @brief Holds specific details for a command entry used by this CLI.
  *
  * @param Name          The command name.
- * @param MaxArguments  Maximum number of arguments to look for.
  * @param Handler       Handler function for this command.
  * @param HelpMessage   Optional message to display with the built-in help command.
  */
 typedef struct _BricliCommand_t
 {
-    const char*             Name;           /*<< Command name. */
-    Bricli_CommandHandler  Handler;        /*<< Handler function for this command. */
-    const char*             HelpMessage;    /*<< Optional message to be displayed by the help command. */
+    const char*             Name;                   /*<< Command name. */
+    Bricli_CommandHandler   Handler;                /*<< Handler function for this command. */
+    const char*             HelpMessage;            /*<< Optional message to be displayed by the help command. */
+    BricliAuthLevel_t       AuthScopesRequired;     /*<< The authorisation scopes required to access this command. */
 } BricliCommand_t;
 
 /**
