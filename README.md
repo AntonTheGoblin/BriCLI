@@ -63,15 +63,19 @@ static BricliCommand_t _commandList[] =
 
 int main(void)
 {
-    BricliHandle_t cli = BRICLI_HANDLE_DEFAULT;
-    cli.Eol = "\r";     
-    cli.SendEol = NULL; // Set this to have BriCLI use a different EoL in Bricli_WriteLine* functions.
-    cli.BspWrite = Bsp_Write;
-    cli.CommandList = _commandList;
-    cli.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
-    cli.RxBuffer = _rxBuffer;
-    cli.RxBufferSize = RX_BUFFER_SIZE;
-    cli.LocalEcho = true;
+    BricliHandle_t cli;
+	BricliInit_t cliInit = {0};
+
+    cliInit.Eol = "\r";     
+    cliInit.SendEol = NULL; // Set this to have BriCLI use a different EoL in Bricli_WriteLine* functions.
+    cliInit.BspWrite = Bsp_Write;
+    cliInit.CommandList = _commandList;
+    cliInit.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
+    cliInit.RxBuffer = _rxBuffer;
+    cliInit.RxBufferSize = RX_BUFFER_SIZE;
+    cliInit.LocalEcho = true;
+
+	Bricli_Init(&cli, &cliInit);
     
     // ...
 }
@@ -245,4 +249,11 @@ There are two built in commands that are provided by BriCLI <code>clear</code> a
 <code>help</code> will display all commands in the cli's command list, including built-in commands, along with their HelpMessage if one was provided
 
 ![BriCLI Help Output](Images/BriCLIHelp.png "Help Message Output")
+
+### Authentication
+BriCLI offers a built-in hierarchical authentication system based loosely on AuthN/AuthZ practices.
+
+Authentication (AuthN) is the process of a user logging in, BriCLI does this using the `login <pass>` system command.
+
+BriCLI then checks the AuthTable for a password match, if one is found the authorization (AuthZ) scopes are applied and all relevant commands are unlocked for use.
 
