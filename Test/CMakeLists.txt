@@ -77,6 +77,7 @@ target_link_options(handler-test PRIVATE ${GCC_COVERAGE_LINK_FLAGS})
 
 # ---- Discover all GoogleTest binaries ----
 include(GoogleTest)
+gtest_discover_tests(auth-test PROPERTIES TEST_LIST unitTests)
 gtest_discover_tests(receive-test PROPERTIES TEST_LIST unitTests)
 gtest_discover_tests(send-test PROPERTIES TEST_LIST unitTests)
 gtest_discover_tests(handler-test PROPERTIES TEST_LIST unitTests)
