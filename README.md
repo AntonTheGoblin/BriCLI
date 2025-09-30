@@ -30,7 +30,7 @@ BriCLI (pronounced Bric-lee) is an easy-to-use C Command Line Interface library
 Currently escape codes aren't supported, it is recommended that your application ignore escape codes prior to them reaching BriCLI as shown in the examples.
 
 ## Install Guide
-The only required files are the `Source/bricli.c`, `Source/bricli.h` and `Config/bricli_config.h`, these contain the full BriCLI functionality.
+The only required files are the `source/bricli.c`, `source/bricli.h` and `config/bricli_config.h`, these contain the full BriCLI functionality.
 
 Always obtain the source files from the latest [release](https://github.com/AnthonyRBWall/BriCLI/releases) to ensure best compatibility.
 
