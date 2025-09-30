@@ -7,8 +7,8 @@ project(Bricli_Example_Auth VERSION 1.0
 )
 
 set(BRICLI_DIR ${CMAKE_CURRENT_LIST_DIR}/../../source)
-set(INC_DIR ${BRICLI_DIR} ${BRICLI_DIR}/../config)
+set(INC_DIR ${BRICLI_DIR}/../include ${BRICLI_DIR}/../config)
 set(SOURCES main.c ${BRICLI_DIR}/bricli.c)
 
-add_executable(AuthCli ${SOURCES})
-target_include_directories(AuthCli PRIVATE ${INC_DIR})
+add_executable(auth-cli ${SOURCES})
+target_include_directories(auth-cli PRIVATE ${INC_DIR})
