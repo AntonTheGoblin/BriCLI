@@ -29,9 +29,10 @@ namespace Cli {
     class SendTest: public ::testing::Test
     {
     protected:
-        BricliCommand_t _commandList[1] =
+        BricliCommand_t _commandList[2] =
         {
-            { "test", Test_Handler, "Tests.", BricliScopeAll }
+            { "test", Test_Handler, "Tests.", BricliScopeAll },
+			BRICLI_COMMAND_LIST_TERMINATOR
         };
         BricliHandle_t _cli;
         char _buffer[100] = {0};
@@ -58,7 +59,6 @@ namespace Cli {
             // Configure our default BriCLI settings.
             BricliInit_t init = {0};
             init.CommandList = _commandList;
-            init.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
             init.RxBuffer = _buffer;
             init.RxBufferSize = 100;
             init.BspWrite = BspWrite;
@@ -158,7 +158,7 @@ namespace Cli {
 
     TEST_F(SendTest, Help)
     {
-        uint32_t NumberOfCommands = (4 + _cli.CommandListLength); // 4 system command calls with automatic Eols plus however many custom commands.
+        uint32_t NumberOfCommands = (4 + 1); // 4 system command calls with automatic Eols plus however many custom commands.
 
         // Print the help message and make sure BspWrite is called.
         EXPECT_EQ(0, Bricli_PrintHelp(&_cli));

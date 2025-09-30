@@ -81,7 +81,8 @@ static BricliCommand_t _commandList[] =
 {
     {"ping", Ping_Handler, "Responds with Pong."},
     {"add", Add_Handler, "Adds two numbers together and prints the response."},
-    {"colours", Colour_Handler, "Demonstrates VT100 colours."}
+    {"colours", Colour_Handler, "Demonstrates VT100 colours."},
+	BRICLI_COMMAND_LIST_TERMINATOR
 };
 
 int main(void)
@@ -93,7 +94,6 @@ int main(void)
     cliInit.SendEol = NULL; // Set this to have BriCLI use a different EoL in Bricli_WriteLine* functions.
     cliInit.BspWrite = Bsp_Write;
     cliInit.CommandList = _commandList;
-    cliInit.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
     cliInit.RxBuffer = _rxBuffer;
     cliInit.RxBufferSize = RX_BUFFER_SIZE;
     cliInit.LocalEcho = true;

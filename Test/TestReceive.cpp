@@ -15,9 +15,10 @@ namespace Cli {
     class ReceiveTest: public ::testing::Test
     {
     protected:
-        BricliCommand_t _commandList[1] =
+        BricliCommand_t _commandList[2] =
         {
-            {"test", Test_Handler, "Tests", BricliScopeAll}
+            {"test", Test_Handler, "Tests", BricliScopeAll},
+			BRICLI_COMMAND_LIST_TERMINATOR
         };
         BricliHandle_t _cli;
         char _buffer[100] = {0};
@@ -38,7 +39,6 @@ namespace Cli {
             // Configure our default BriCLI settings.
             BricliInit_t init = {0};
 			init.CommandList = _commandList;
-            init.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
             init.RxBuffer = _buffer;
             init.RxBufferSize = 100;
             init.BspWrite = BspWrite;

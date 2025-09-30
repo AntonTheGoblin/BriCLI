@@ -54,7 +54,8 @@ static BricliCommand_t _commandList[] =
 {
     { "ping", Ping_Handler, "Pong!", BricliScopeAll },
     { "admin", Admin_Handler, "Admins only!", BricliScopeAdmin },
-    { "exit", Exit_Handler, "Exits the application", BricliScopeAll }
+    { "exit", Exit_Handler, "Exits the application", BricliScopeAll },
+	BRICLI_COMMAND_LIST_TERMINATOR
 };
 
 static BricliAuthEntry_t _authList[] =
@@ -76,7 +77,6 @@ int main(int argc, char const *argv[])
     init.RxBuffer = _rxBuffer;
     init.RxBufferSize = RX_BUFFER_SIZE;
     init.CommandList = _commandList;
-	init.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
 	Bricli_Init(&_cli, &init);
 
     // Send the initial prompt.
