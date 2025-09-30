@@ -249,7 +249,7 @@ static const BricliSystemCommand_t _systemCommands[] =
 	{"clear", Bricli_SystemHandlerClear, "Clears the terminal"},
 	{"login", Bricli_SystemHandlerLogin, "Login to the terminal"},
 	{"logout", Bricli_SystemHandlerLogout, "Logout from the terminal"},
-	{0}
+	{NULL, NULL, NULL}
 };
 
 /**
@@ -284,11 +284,9 @@ static int Bricli_SystemHandlerHelp(BricliHandle_t *cli, uint32_t numberOfArgs, 
 	}
 	
 	// Print all registered user commands.
-	BricliCommand_t *command = NULL;
-	for (uint8_t i = 0; i < cli->CommandListLength; i++)
+	BricliCommand_t *command = &cli->CommandList[0];
+	while(command->Name != NULL)
     {
-        command = &cli->CommandList[i];
-
 		// Only display help if the command is available to the current auth scope
 		if (Bricli_IsCommandInScope(cli, command))
 		{
@@ -316,6 +314,9 @@ static int Bricli_SystemHandlerHelp(BricliHandle_t *cli, uint32_t numberOfArgs, 
 				}
 			}
 		}
+
+		// Increment the pointer
+		command++;
     }
 
 	return BricliOk;
@@ -468,7 +469,7 @@ BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* settings)
 	}
 
 	// Validate command list settings
-	if (NULL == settings->CommandList || 0 == settings->CommandListLength)
+	if (NULL == settings->CommandList || NULL == settings->CommandList[0].Name)
 	{
 		BRICLI_LOG("BriCLI: Invalid Command List in %s\n", __func__);
 		result = BricliBadParameter;
@@ -504,7 +505,6 @@ BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* settings)
 
 	// Command List settings
 	cli->CommandList = settings->CommandList;
-	cli->CommandListLength = settings->CommandListLength;
 
 	// BSP settings
 	cli->BspWrite = settings->BspWrite;
@@ -755,15 +755,14 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
 			return BricliOk;
 		}
 
+		// Increment the pointer
 		systemCommand++;
 	}
 
 	// Not a system command so look to our command list for a match.
-	BricliCommand_t *cliCommand = NULL;
-	for (uint8_t i = 0; i < cli->CommandListLength; i++)
+	BricliCommand_t *cliCommand = &cli->CommandList[0];
+	while(cliCommand->Name != NULL)
     {
-        // Get the next CLI Command reference.
-        cliCommand = &cli->CommandList[i];
 
         // Check if we have found a match.
         if (strcmp(command, cliCommand->Name) == 0)
@@ -813,6 +812,9 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
 			
             return result;
         }
+
+		// Increment the pointer
+		cliCommand++;
     }
 
     // If we get here then we failed to find a valid command in the list.

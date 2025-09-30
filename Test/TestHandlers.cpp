@@ -47,10 +47,11 @@ namespace Cli {
     class HandlerTest: public ::testing::Test
     {
     protected:
-        BricliCommand_t _commandList[2] =
+        BricliCommand_t _commandList[3] =
         {
             {"test", Test_Handler, "Tests", BricliScopeAll},
-            {"args", Argument_Handler, "Test Arguments", BricliScopeAll}
+            {"args", Argument_Handler, "Test Arguments", BricliScopeAll},
+			BRICLI_COMMAND_LIST_TERMINATOR
         };
         BricliHandle_t _cli;
         char _buffer[100] = {0};
@@ -79,7 +80,6 @@ namespace Cli {
             // Configure our default BriCLI settings.
 			BricliInit_t init = {0};
 			init.CommandList = _commandList;
-            init.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
             init.RxBuffer = _buffer;
             init.RxBufferSize = 100;
             init.BspWrite = BspWrite;
@@ -112,8 +112,6 @@ namespace Cli {
 		// Bad Command List
 		EXPECT_EQ(BricliBadParameter, Bricli_Init(&initCli, &initSettings));
 		initSettings.CommandList = _commandList;
-		EXPECT_EQ(BricliBadParameter, Bricli_Init(&initCli, &initSettings));
-		initSettings.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
 		
 		// Bad BspWrite
 		EXPECT_EQ(BricliBadParameter, Bricli_Init(&initCli, &initSettings));
@@ -131,7 +129,6 @@ namespace Cli {
 		initSettings.RxBuffer = _buffer;
 		initSettings.RxBufferSize = 100;
 		initSettings.CommandList = _commandList;
-		initSettings.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
 		initSettings.BspWrite = BspWrite;
 
 		// Valid setup
@@ -148,7 +145,6 @@ namespace Cli {
 		initSettings.RxBuffer = _buffer;
 		initSettings.RxBufferSize = 100;
 		initSettings.CommandList = _commandList;
-		initSettings.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
 		initSettings.BspWrite = BspWrite;
 
 		initSettings.Eol = (char *)"\r\n";

@@ -34,12 +34,13 @@ namespace Cli {
     class AuthTest: public ::testing::Test
     {
     protected:
-        BricliCommand_t _commandList[4] =
+        BricliCommand_t _commandList[5] =
         {
             {"anonymous", NoAuth_Handler, "No auth", BricliScopeAll},
             {"user", User_Handler, "User level command", BricliScopeUser},
             {"admin", Admin_Handler, "admin level command", BricliScopeAdmin },
-            {"custom", Custom_Handler, "custom level command", CUSTOM_AUTH_SCOPE }
+            {"custom", Custom_Handler, "custom level command", CUSTOM_AUTH_SCOPE },
+			BRICLI_COMMAND_LIST_TERMINATOR
         };
 		BricliAuthEntry_t _authList[3] =
 		{
@@ -76,7 +77,6 @@ namespace Cli {
 			BricliInit_t init = {0};
 			init.AuthList = _authList;
 			init.CommandList = _commandList;
-            init.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
             init.RxBuffer = _buffer;
             init.RxBufferSize = 100;
             init.BspWrite = BspWrite;
