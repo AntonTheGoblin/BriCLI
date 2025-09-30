@@ -19,6 +19,7 @@
 #include <stdarg.h>
 
 #include "bricli_config.h"
+#include "auth.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -212,13 +213,6 @@ typedef enum _BricliErrors_t
     BricliOk                 = 0
 } BricliErrors_t;
 
-typedef enum _BricliAuthErrors_t
-{
-    BricliAuthDenied = -1,       // Request for auth denied
-    BricliAuthGranted = 0,      // Request for auth elevation granted
-    BricliAuthRevoked = 1       // Request for auth decrease granted
-} _BricliAuthErrors_t;
-
 /**
  * @brief Enumerated VT100 colour options
  */
@@ -273,27 +267,6 @@ typedef enum _BricliStates_t
     BricliStateHandlerRunning,  // BriCLI is executing a command handler.
     BricliStateFinished
 } BricliStates_t;
-
-/**
- * @brief CLI Authorization scopes, represented as up to 32 bit flags
- */
-typedef uint32_t BricliAuthScopes_t;
-
-// Unauthorized scope, available to anyone without login
-#define BricliScopeAll                  (0)
-
-// User scope
-#define BricliScopeUser                 (1 << 1)
-
-// Admin scope
-#define BricliScopeAdmin                (1 << 2)
-
-typedef struct _BricliAuthEntry_t
-{
-    const char *Username;
-    const char *Password;
-    BricliAuthScopes_t Scopes;
-} BricliAuthEntry_t;
 
 /**
  * @brief BSP function for writing data.
