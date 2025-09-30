@@ -1,7 +1,7 @@
 # BriCLI
 BriCLI (pronounced Bric-lee) is an easy-to-use C Command Line Interface library 
 
-![BriCLI Output](Images/BriCLI.png "BriCLI Output")
+![BriCLI Output](images/BriCLI.png "BriCLI Output")
 
 ## Contents 
 - [BriCLI](#bricli)
@@ -32,16 +32,16 @@ Currently escape codes aren't supported, it is recommended that your application
 ## Install Guide
 The only required files are the `Source/bricli.c`, `Source/bricli.h` and `Config/bricli_config.h`, these contain the full BriCLI functionality.
 
-Always obtain the source files from the latest [release](https://github.com/AntonTheGoblin/BriCLI/releases) to ensure best compatibility.
+Always obtain the source files from the latest [release](https://github.com/AnthonyRBWall/BriCLI/releases) to ensure best compatibility.
 
 ```bash
-git clone --depth 1 --branch "<release>" git@github.com:AntonTheGoblin/BriCLI.git
+git clone --depth 1 --branch "<release>" git@github.com:AnthonyRBWall/BriCLI.git
 ```
 
-You can clone older releases if needed, such as the `1.1.0-beta` build:
+You can clone older releases if needed, such as the `v1.0.0` build:
 
 ```bash
-git clone --depth 1 --branch "1.1.0-beta" git@github.com:AntonTheGoblin/BriCLI.git
+git clone --depth 1 --branch "v1.0.0" git@github.com:AnthonyRBWall/BriCLI.git
 ```
 
 ## Configuration
@@ -271,7 +271,7 @@ There are two built in commands that are provided by BriCLI <code>clear</code> a
 
 <code>help</code> will display all commands in the cli's command list, including built-in commands, along with their HelpMessage if one was provided
 
-![BriCLI Help Output](Images/BriCLIHelp.png "Help Message Output")
+![BriCLI Help Output](images/BriCLIHelp.png "Help Message Output")
 
 ### Authentication
 BriCLI offers a built-in scope based authentication system based loosely on AuthN/AuthZ practices. The default scope for commands is `BricliScopeAll` which can be accessed by all users, including those not authenticated
@@ -302,5 +302,5 @@ static BricliAuthEntry_t _authList[] =
 
 The `logout` command can be used to reset authorization scopes.
 
-![BriCLI Authorization Output](Images/BriCLIAuthentication.png "Authorization Output")
+![BriCLI Authorization Output](images/BriCLIAuthentication.png "Authorization Output")
 
