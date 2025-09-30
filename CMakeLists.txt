@@ -17,10 +17,10 @@ option(${PROJECT_NAME}_BUILD_TESTS "Enable to build unit tests" ON)
 # == Paths ==
 # ===========
 
-set(SOURCE_DIR Source)
-set(INC_DIR Include)
-set(CONFIG_DIR Config)
-set(TEST_DIR Test)
+set(SOURCE_DIR source)
+set(INC_DIR include)
+set(CONFIG_DIR config)
+set(TEST_DIR test)
 
 # =============
 # == Library ==

@@ -13,11 +13,11 @@ SET(GCC_COVERAGE_COMPILE_FLAGS -fprofile-arcs -ftest-coverage -Wall -DUNIT_TEST)
 SET(GCC_COVERAGE_LINK_FLAGS    -fprofile-arcs -lgcov)
 
 # Set up directory paths
-set(SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/../Source)
-set(INC_DIR ${CMAKE_CURRENT_LIST_DIR}/../Include ${CMAKE_CURRENT_LIST_DIR}/../Config)
-set(LIB_DIR ${CMAKE_CURRENT_LIST_DIR}/Lib)
+set(SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/../source)
+set(INC_DIR ${CMAKE_CURRENT_LIST_DIR}/../include ${CMAKE_CURRENT_LIST_DIR}/../config)
+set(LIB_DIR ${CMAKE_CURRENT_LIST_DIR}/lib)
 set(TEST_DIR ${CMAKE_CURRENT_LIST_DIR})
-set(MOCK_DIR ${TEST_DIR}/Mocks)
+set(MOCK_DIR ${TEST_DIR}/mocks)
 
 # Add the GoogleTest library
 include(FetchContent)
