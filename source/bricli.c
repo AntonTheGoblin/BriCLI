@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#include "bricli.h"
+#include <bricli/bricli.h>
 
 // =====================
 // ===== Constants =====

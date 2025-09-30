@@ -72,7 +72,7 @@ The only port functionality required by BriCLI is the BspWrite function, this mu
 
 ## User Guide
 ### Adding BriCLI to your project
-BriCLI is contained entirely in a single source and header pair, simply copy these files into your application and use `#include "bricli.h"` anywhere you want to call the BriCLI API.
+BriCLI is contained entirely in a single source and header pair, simply copy these files into your application and use `#include <bricli/bricli.h>` anywhere you want to call the BriCLI API.
 
 ### Initialisation
 The basic pre-requisites for using BriCLI are the command list, the CLI settings, the BspWrite function and the RX buffer.

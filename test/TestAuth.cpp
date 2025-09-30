@@ -4,7 +4,7 @@
 #include <FFF/fff.h>
 DEFINE_FFF_GLOBALS;
 
-#include "bricli.h"
+#include <bricli/bricli.h>
 
 // Setup fake functions
 FAKE_VALUE_FUNC(int, BspWrite, uint32_t, const char*);
