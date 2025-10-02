@@ -68,7 +68,8 @@ There are several settings that can be applied to BriCLI via the `bricli_config.
 ## Examples
 An example application for using BriCLI on various platforms can be found under the Examples directory. Currently the following examples are supported:
 
-- Simple CLI for use on most x86/x64 systems
+- Simple CLI: The ideal starting point for most users, covers core functionality
+- Authentication CLI: Demonstrates how to register authenticated users and scoped commands
 
 ## Porting Guide
 The only port functionality required by BriCLI is the BspWrite function, this must be provided by the developer in all circumstances.
