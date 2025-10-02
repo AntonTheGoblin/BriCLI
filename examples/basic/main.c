@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "bricli.h"
+#include <bricli/bricli.h>
 
 #define RX_BUFFER_SIZE  80 // Size of the internal RX Buffer.
 

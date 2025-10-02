@@ -8,7 +8,7 @@ cmake_minimum_required(VERSION  3.21)
 project(BriCLI
 	LANGUAGES C
 	VERSION 0.0.0
-	DESCRIPTION "An easy-to-use C99 Command Line Interface library"
+	DESCRIPTION "An easy-to-use CLI (Command Line Interface) library"
 )
 
 option(${PROJECT_NAME}_BUILD_TESTS "Enable to build unit tests" ON)
@@ -17,10 +17,10 @@ option(${PROJECT_NAME}_BUILD_TESTS "Enable to build unit tests" ON)
 # == Paths ==
 # ===========
 
-set(SOURCE_DIR Source)
-set(INC_DIR Include)
-set(CONFIG_DIR Config)
-set(TEST_DIR Test)
+set(SOURCE_DIR source)
+set(INC_DIR include)
+set(CONFIG_DIR config)
+set(TEST_DIR test)
 
 # =============
 # == Library ==

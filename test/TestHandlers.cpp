@@ -9,7 +9,7 @@ DEFINE_FFF_GLOBALS;
 #define BRICLI_SHOW_HELP_ON_ERROR 1
 #define BRICLI_USE_REENTRANT 0
 
-#include "bricli.h"
+#include <bricli/bricli.h>
 
 // Setup fake functions
 FAKE_VALUE_FUNC(int, BspWrite, uint32_t, const char*);
