@@ -101,69 +101,216 @@ static const char *_backgroundTable[] =
  */
 static uint32_t Bricli_ExtractArguments(char *arguments, char *output[])
 {
-    char seperator[] = " ";
+    // char seperator[] = " ";
     uint8_t argumentsFound = 0;
-    
-#if BRICLI_USE_REENTRANT
-    char *savePointer = NULL;
-#endif // BRICLI_USE_REENTRANT
+    // char *savePointer = NULL;
+	char *argumentsEnd = NULL;
 
-    // Make sure we actually have something to work with.
-    if (arguments == NULL || output == NULL)
+	printf("[DEBUG] %s: %s\n", __func__, arguments);
+
+	// Make sure we actually have something to work with.
+    if (arguments == NULL || output == NULL || *arguments == '\0')
     {
         return 0;
     }
 
-    // Split the arguments.
-    #if BRICLI_USE_REENTRANT
-        char *token = (char *)strtok_r(arguments, seperator, &savePointer);
-    #else
-        char *token = (char *)strtok(arguments, seperator);
-    #endif // BRICLI_USE_REENTRANT
-    while (token != NULL && argumentsFound < BRICLI_MAX_ARGUMENTS)
-    {
+	// Find the end of the string
+	argumentsEnd = arguments + strlen(arguments);
+	printf("[DEBUG] Args Tokenizer: %p to %p (strlen: %u)\n", arguments, argumentsEnd, (uint32_t)strlen(arguments));
 
-        // This is actually a string argument, need to skip to the next quote mark.
-        if (*token == '\"')
-        {
-            // Skip past the speech mark.
-            token++;
+	// Setup tokenizer variables
+	char *argStart = arguments;
+	char *cursor = argStart;
+	bool isStringMode = false;
+	bool argFound = false;
 
-            // If we aren't useing re-entrancy we need to calculate the next token point ahead of time.
-            #if !BRICLI_USE_REENTRANT
-                char* savePointer = token + strlen(token) + 1;
-            #endif // !BRICLI_USE_REENTRANT
+	// Run the tokenizer
+	while (argStart != argumentsEnd)
+	{
+		char *argEnd = strchr(cursor, ' ');
+		// bool isString = (*cursor == '\"') ? true : false;
 
-            // If strtok_r nulled out a space we need to re-add it.
-            if (savePointer != NULL && *(savePointer - 1) == '\0')
-            {
-                *(savePointer - 1) = ' ';
-            }
+		// Normal parsing mode
+		if (!isStringMode)
+		{
+			// String found, switch mode
+			if (*cursor == '\"')
+			{
+				printf("[DEBUG] Entering string mode\n");
+				isStringMode = true;
+				// argStart++;
+				// cursor++;
 
-            // Look for the closing quote mark.
-            char *quoteToken = strchr(savePointer, '\"');
-            if (quoteToken == NULL)
-            {
-                // User didn't close out their speech mark so just bail out.
-                return 0;
-            }
+				strcpy(cursor, (cursor + 1));
+				cursor++;
+				argumentsEnd--;
+			}
+			else
+			{
+				// Non-string arguments require no additional-processing
+				argFound = true;
+			}
+		}
+		// String parsing mode
+		else
+		{			
+			// Search for the end sting
+			cursor = strchr(cursor, '\"');
 
-            // Replace the closing mark with a null character and step forward the save pointer.
-            *quoteToken = '\0';
-            savePointer = quoteToken + 1;
-        }
+			// Missing closing quote mark, exit
+			if (NULL == cursor)
+			{
+				printf("[DEBUG] Invalid string format\n");
+				return 0;
+			}
+			else if (*(cursor - 1) == '\\')
+			{
+				// Escaped quote mark, ignore
+				printf("[DEBUG] Skipping escape character\n");
+				cursor++;
+			}
+			else
+			{
+				// Closing quote mark, string found
+				printf("[DEBUG] Exiting string mode\n");
 
-        // Store this token and increment the arguments counter.
-        output[argumentsFound] = token;
-        argumentsFound++;
+				// Strip the quote mark out
+				strcpy(cursor, (cursor + 1));
+				// *cursor = '\0';
+				// cursor++;
+				argumentsEnd--;
 
-        // Get the next token.
-        #if BRICLI_USE_REENTRANT
-            token = (char *)strtok_r(NULL, seperator, &savePointer);
-        #else
-            token = (char *)strtok(NULL, seperator);
-        #endif // BRICLI_USE_REENTRANT
-    }
+				// Move argEnd pointer and update tokenizer variables
+				argEnd = cursor;
+				argFound = true;
+				isStringMode = false;
+			}
+		}
+
+		// An argument was found
+		if (argFound)
+		{
+			// Store the argument
+			output[argumentsFound] = argStart;
+			argumentsFound++;
+
+			// Walk through the argument and replace any escapes
+			cursor = strchr(argStart, '\\');
+			while (NULL != cursor)
+			{
+				cursor = strchr(cursor, '\\');
+				if (*cursor == '\\')
+				{
+					printf("[DEBUG] Replaced escaped character\n");
+					strcpy(cursor, (cursor + 1));
+					cursor++;
+					argumentsEnd--;
+
+					if (NULL != argEnd)
+					{
+						argEnd--;
+					}
+				}
+			}
+
+			// Determine if more arguments to process
+			if (NULL == argEnd)
+			{
+				// No more arguments
+				printf("[DEBUG] Tokenizer finished\n");
+				argEnd = argumentsEnd;
+			}
+			else
+			{
+				// More arguments
+				printf("[DEBUG] More arguments: %020x\n", *argEnd);
+				*argEnd = '\0';
+				argEnd++;
+			}
+
+			printf("[DEBUG]: Arg%d: %s\n", argumentsFound, argStart);
+
+			// Reset tokenizer
+			argFound = false;
+			argStart = argEnd;
+			cursor = argStart;
+
+		}
+	}
+
+	// Split the arguments.
+    // #if BRICLI_USE_REENTRANT
+    //     char *token = (char *)strtok_r(arguments, seperator, &savePointer);
+    // #else
+    //     char *token = (char *)strtok(arguments, seperator);
+    // #endif // BRICLI_USE_REENTRANT
+    // while (token != NULL && argumentsFound < BRICLI_MAX_ARGUMENTS)
+    // {
+    //     // This is actually a string argument, need to skip to the next quote mark.
+    //     if (*token == '\"')
+    //     {
+    //         // Skip past the speech mark.
+    //         token++;
+
+	// 		// Calculate the next token point ahead of time.
+	// 		savePointer = token + strlen(token) + 1;
+            
+	// 		// If we aren't useing re-entrancy we need to calculate the next token point ahead of time.
+    //         #if !BRICLI_USE_REENTRANT
+    //             savePointer = token + strlen(token) + 1;
+    //         #endif // !BRICLI_USE_REENTRANT
+
+	// 		// If we've hit the end of the argument
+
+    //         // If strtok nulled out a space we need to re-add it.
+    //         if (savePointer != NULL && *(savePointer - 1) == '\0')
+    //         {
+    //             *(savePointer - 1) = ' ';
+    //         }
+
+    //         // Look for the closing quote mark.
+	// 		bool stringArgumentComplete = false;
+	// 		while (!stringArgumentComplete)
+	// 		{
+	// 			char* quoteToken = strchr(savePointer, '\"');
+	// 			printf("[DEBUG]: QuoteToken: %s\n", quoteToken);
+	// 			if (quoteToken == NULL)
+	// 			{
+	// 				// User didn't close out their speech mark so just bail out.
+	// 				return 0;
+	// 			}
+	// 			else if (*(quoteToken - 1) == '\\')
+	// 			{
+	// 				// This is actually an escaped quote mark, shift the string back one.
+	// 				printf("[DEBUG]: Argument before copy: %s\n", quoteToken);
+	// 				strcpy((quoteToken - 1), quoteToken);
+	// 				printf("[DEBUG]: Argument after copy: %s\n", quoteToken);
+	// 				savePointer = quoteToken;
+	// 			}
+	// 			else
+	// 			{
+	// 				// Closing quote found
+	// 				stringArgumentComplete = true;
+					
+	// 				// Replace the closing mark with a null character and step forward the save pointer.
+	// 				*quoteToken = '\0';
+	// 				savePointer = quoteToken + 1;
+	// 			}
+	// 		}
+    //     }
+
+    //     // Store this token and increment the arguments counter.
+    //     printf("[DEBUG]: Arg%d: %s\n", argumentsFound, token);
+	// 	output[argumentsFound] = token;
+    //     argumentsFound++;
+
+    //     // Get the next token.
+    //     #if BRICLI_USE_REENTRANT
+    //         token = (char *)strtok_r(NULL, seperator, &savePointer);
+    //     #else
+    //         token = (char *)strtok(NULL, seperator);
+    //     #endif // BRICLI_USE_REENTRANT
+    // }
 
     // Return how many arguments we were able to find.
     return argumentsFound;

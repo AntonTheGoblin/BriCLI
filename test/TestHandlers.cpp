@@ -203,8 +203,9 @@ namespace Cli {
     TEST_F(HandlerTest, Arguments)
     {
         std::string testCommandTwoArgs("args \"Hello World\" 43\n");
-        std::string testCommandOneArgs("args 43\n");
+        std::string testCommandOneArgs("args 52\n");
         std::string testCommandNoArgs("args\n");
+        std::string testCommandSingleStringArgs("args \"Word\"\n");
         BricliErrors_t error = BricliUnknown;
 
         // Receive the command.
@@ -227,26 +228,54 @@ namespace Cli {
         Bricli_Parse(&_cli);
         EXPECT_EQ(Argument_Handler_fake.call_count, 3);
         EXPECT_EQ(0, Argument_Handler_fake.arg0_val);
+
+		// Repeat with single word string
+		Bricli_ReceiveArray(&_cli, testCommandSingleStringArgs.length(), (char *)testCommandSingleStringArgs.c_str());
+        Bricli_Parse(&_cli);
+        EXPECT_EQ(Argument_Handler_fake.call_count, 4);
+        EXPECT_EQ(1, Argument_Handler_fake.arg0_val);
     }
 
+	TEST_F(HandlerTest, EscapedArguments)
+	{
+		std::string testCommand("args \"This is a \\\"substring\\\"\"\n");
+		BricliErrors_t error = BricliUnknown;
+
+		// Receive the command.
+        error = Bricli_ReceiveArray(&_cli, testCommand.length(), (char *)testCommand.c_str());
+        EXPECT_EQ(error, BricliOk);
+
+		// Parse and check the handler passed the arguments through ok.
+        error = (BricliErrors_t)Bricli_Parse(&_cli);
+        EXPECT_EQ(Argument_Handler_fake.call_count, 1);
+        EXPECT_EQ(1, Argument_Handler_fake.arg0_val);
+        EXPECT_EQ(error, BricliOk);
+
+		// Check the response
+		// EXPECT_STREQ("This is a \"substring\"", Argument_Handler_fake.arg1_val[0]);
+	}
+
     TEST_F(HandlerTest, MultipleCommands)
-    {
+	{
         std::string twoCommands("test\ntest\n");
         std::string threeCommands("test\nargs 124\ntest");
         std::string twoArgsCommands("args 1 \"Hello\"\nargs 2 \"World\"\n");
         BricliErrors_t error = BricliUnknown;
 
         // Receive the command.
-        error = Bricli_ReceiveArray(&_cli, twoCommands.length(), (char *)twoCommands.c_str());
+        printf("Test 1\n");
+		error = Bricli_ReceiveArray(&_cli, twoCommands.length(), (char *)twoCommands.c_str());
         EXPECT_EQ(error, BricliOk);
 
-        // Parse and check both commands were handled.
-        error = (BricliErrors_t)Bricli_Parse(&_cli);
+		// Parse and check both commands were handled.
+		error = (BricliErrors_t)Bricli_Parse(&_cli);
         EXPECT_EQ(Test_Handler_fake.call_count, 2);
         EXPECT_EQ(_cli.PendingBytes, 0);
         EXPECT_EQ(error, BricliOk);
+		printf("DONE\n");
 
         // Receive the triple command
+		printf("Test 2\n");
         error = Bricli_ReceiveArray(&_cli, threeCommands.length(), (char *)threeCommands.c_str());
         EXPECT_EQ(error, BricliOk);
 
@@ -255,8 +284,10 @@ namespace Cli {
         EXPECT_EQ(Argument_Handler_fake.call_count, 1);
         EXPECT_EQ(_cli.PendingBytes, 0);
         EXPECT_EQ(error, BricliOk);
+		printf("DONE\n");
 
         // Receive the dual arguments command
+		printf("Test 3\n");
         error = Bricli_ReceiveArray(&_cli, twoArgsCommands.length(), (char *)twoArgsCommands.c_str());
         EXPECT_EQ(error, BricliOk);
 
@@ -264,6 +295,7 @@ namespace Cli {
         EXPECT_EQ(Argument_Handler_fake.call_count, 3);
         EXPECT_EQ(_cli.PendingBytes, 0);
         EXPECT_EQ(error, BricliOk);
+		printf("DONE\n");
     }
 
     TEST_F(HandlerTest, CommandNotFound)

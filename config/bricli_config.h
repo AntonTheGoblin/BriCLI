@@ -28,7 +28,7 @@
 #define BRICLI_PRINT_MESSAGE_SIZE 80
 
 // When on, BriCLI will use the thread safe strtok_r in place of strtok, default off
-#define BRICLI_USE_REENTRANT 0
+#define BRICLI_USE_REENTRANT 1
 
 // ============================
 // ===== Default Settings =====
